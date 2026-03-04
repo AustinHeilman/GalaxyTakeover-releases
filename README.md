@@ -1,6 +1,14 @@
 # GalaxyTakeover
 
-A space 4X strategy game inspired by Space Empires IV.
+A space 4X strategy game inspired by Space Empires IV. Build your empire, design ships, research technology, and conquer the galaxy.
+
+![Empire Selection](screenshots/start-screen.png)
+
+![System View](screenshots/main-game.png)
+
+![Ship Designer](screenshots/blueprints.png)
+
+![Research, Diplomacy & Logs](screenshots/game-menus.png)
 
 ## Download
 
