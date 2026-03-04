@@ -1,0 +1,2 @@
+# GalaxyTakeover-releases
+Game releases
