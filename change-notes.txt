@@ -1,0 +1,1606 @@
+GalaxyTakeover - Change Notes
+==============================
+
+[March 27 2026]
+
+Combat Engine Stability — OOM & Stalemate Fixes
+------------------------------------------------
+- Fixed exponential memory growth caused by weapon platform cargo
+  duplication. Colony weapon platforms doubled in memory every combat,
+  eventually consuming 6GB+. Weapon platforms now live in a dedicated
+  colony.WeaponPlatforms collection instead of cycling through cargo.
+- Fixed troop carrier invasion loop — troop carriers would repeat
+  "approaching colony" forever without landing. The no-weapons stalemate
+  check was skipping the entire combat loop, preventing troops from
+  deploying. Troops now land correctly at hostile colonies.
+- Fixed bombardment being cut short — the zero-damage stalemate detector
+  only tracked ship-to-ship damage, so bombardment progress (destroying
+  facilities, killing population) was invisible. Bombardment weapons
+  (Planetary Napalm, Neutron Bombs, plague bombs) now work correctly.
+- Layered stalemate detection: scripts can now vote via combat.can_begin
+  event before combat grid is even created. Engine checks broadened to
+  detect bombardment weapons and warheads alongside regular weapons.
+- 800-turn selfplay games now complete in 2-6 minutes, under 1.1GB peak
+  memory. Previously OOM'd at 6GB+ around turn 100.
+
+Combat Event Optimization
+-------------------------
+- Combat events (weapon firing, hit calculating, missed, etc.) are now
+  skipped entirely when no mod handlers are listening. Saves ~570MB of
+  GameEvent allocations per combat-heavy turn in selfplay.
+- Added HasHandlers() to the event dispatcher for O(1) handler existence
+  checks. Combat scripts use this to skip event construction.
+- Replay effects only created when replays are being captured. No wasted
+  allocations in headless/selfplay mode.
+- Combat XP only awarded after decisive victories, not stalemates.
+  Eliminated 210K+ spurious XP events per game.
+
+Fleet Consolidation
+-------------------
+- AI fleets now consolidate into larger strike forces before attacking.
+  Solo ships rally to staging depots instead of exploring during war.
+- Minimum attack fleet size enforced (8 ships, 5 for aggressive races).
+  No more suicidal 3-ship raids against 40-colony empires.
+- New fleets hold at depot until 15+ ships before being assigned attack
+  missions. Builds decisive force instead of scattering immediately.
+
+Weapon Platforms Refactored
+---------------------------
+- Weapon platforms are now permanent colony installations stored in a
+  dedicated collection, not deployed/retrieved from cargo each combat.
+- Production delivers weapon platforms directly to the colony's defense
+  collection instead of generic cargo stockpile.
+- Colony detail UI shows weapon platforms alongside cargo items.
+
+Explore Command
+---------------
+- New "Explore" command available on all ships with engines. Automatically
+  finds the nearest warp point to unexplored space using BFS pathfinding.
+- Appears under the Move dropdown in the ship command bar.
+- Works for both player clicks and AI dispatch via the same event system.
+
+Ship Command Bar — Dynamic Sub-Commands
+----------------------------------------
+- Built-in command buttons (Move, Warp, Attack, Resupply, Repair) now
+  support dynamic sub-command dropdowns from component definitions.
+- Mod-defined commands with matching group names automatically appear
+  under the correct built-in button's flyout.
+
+Selfplay Training Improvements
+------------------------------
+- Combat metrics now tracked in SQLite: per-combat timing, stalemate
+  rates, round counts, attacker/defender counts, system positions.
+- Setup phase instrumentation identifies slow combat initialization.
+- Games run 800 turns (was 250), 15-minute timeout (was 5).
+- OOM analysis instructions added — selfplay Claude investigates memory
+  spikes and writes findings to engine-issues.md.
+- Diplomatic history capped at 50 entries per relation to prevent
+  unbounded growth.
+- Message retention reduced to 2 turns in selfplay (was 10).
+- Stale AIState exploration keys cleaned up per turn.
+- Event dispatcher metrics and script profiler reset every 50 turns.
+
+[March 26 2026]
+
+Massive Combat Performance Overhaul
+------------------------------------
+- Games that used to take 45+ minutes (or time out entirely) now finish
+  in under a minute. 10 games complete in about 60 seconds total.
+- Combat weapon calculations are dramatically faster — seeker targeting,
+  point defense, and damage resolution all optimized.
+- Large fleet battles no longer cause the game to freeze or stutter.
+- Fixed a crash during combat when plasma seeker weapons tried to access
+  destroyed targets simultaneously.
+
+AI Race Personalities — Complete Overhaul
+-----------------------------------------
+- Every race now has a unique, working AI personality script that matches
+  its strategy document. Races actually play differently from each other:
+  * Padario builds massive warship fleets and attacks aggressively
+  * D'vo turtles peacefully and builds huge colonies (49 in one game!)
+  * Jeskari builds boarding fleets to capture enemy ships
+  * Maegwyn fortifies every colony with heavy defenses
+  * Bodzeen focuses on carrier groups with fighter swarms
+  * Aydom pursues tech superiority (reached tech level 28!)
+  * Each race has distinct research priorities, weapon preferences,
+    and fleet strategies
+- All races now follow a "turtle-boom" early game: colonize and research
+  first, build military only after meeting other empires. Aggressive
+  races start fighting sooner, peaceful races boom longer.
+- Races will no longer refuse to colonize planets because of terrain
+  type — every planet is worth colonizing.
+
+New Race: Maegwyn AI
+---------------------
+- Maegwyn finally has a complete AI script. They play as industrial
+  fortress builders: heavy construction research, beam weapons, armor-
+  focused ship designs, and fortified colonies.
+
+Rich Message Log Details
+------------------------
+- Research completion messages now show the technology icon, description,
+  what it unlocks (components, facilities, chassis), and what it
+  contributes toward.
+- Combat reports show detailed unit losses with ship artwork — enemy
+  destroyed, your losses, and captured ships in organized tables.
+- Construction completion messages show the ship chassis art or facility
+  icon with build details.
+
+Save Game Improvements
+----------------------
+- Old save files from before this update are now properly rejected with
+  a clear error message instead of loading with missing data.
+- New saves include a format version number for future compatibility
+  checking.
+
+Modding IDE — Debug Profiler
+----------------------------
+- The modding IDE now supports connecting to a running game or self-play
+  session to view real-time profiling data over the network.
+- Script handlers show execution time and memory usage per handler.
+- Service profiler tracks which game phases (AI, combat, movement,
+  production) are using the most time.
+
+Under the Hood
+--------------
+- Removed over 6,000 lines of unused legacy code across the codebase.
+- Game logic moved out of the UI layer into proper services — the
+  engine is now cleaner and more UI-framework independent.
+- Event dispatch system caches handler lookups for much faster event
+  processing during combat.
+- Ship armor and shield type calculations are now cached instead of
+  recalculated every time they're checked.
+- Self-play training system overhauled with better diagnostics, memory
+  watchdog, and per-phase profiling.
+
+[March 24 2026]
+
+Neutral Factions Improvements
+-----------------------------
+- Neutral factions (Free Traders, Pirates, Scientists, Zealots, Miners)
+  now build colony ships within their home system and construct defensive
+  facilities and weapon platforms. They feel more alive.
+- Thread-safety fix prevents a rare crash when multiple AI empires
+  modify solar system data simultaneously.
+
+Modding Examples
+----------------
+- Added 5 new intermediate modding examples showing how to build mods
+  with the scripting system.
+- All mod scripts now have XML documentation comments for better IDE
+  support.
+
+[March 23 2026]
+
+Ship Capture Fixed!
+-------------------
+- Jeskari boarding actions now work end-to-end. Captured ships properly
+  transfer ownership with correct blueprints, icons, and fleet management.
+- Captured ships appear in your fleet panel with the right visuals.
+
+Ground Combat Overhaul
+----------------------
+- Troops now properly deploy from cargo holds during colony assaults.
+- Ground combat uses actual troop component stats (shields, armor, weapons)
+  instead of flat values. Better troops = better invasions.
+- Militia garrison deaths now reduce colony population proportionally.
+  Defending costs the colony its people.
+- Troop drop coordination: one transport per colony prevents pile-ups
+  and spreads your invasion force across multiple targets.
+- Colonies captured by ground troops change ownership instead of being
+  destroyed.
+
+Bombardment Improvements
+------------------------
+- Bombardment damage now scales with damage squared — concentrated
+  firepower from large fleets is devastating against colonies.
+- Bombardment overflow spreads to other colonies in the same system.
+  One fleet can pressure an entire system.
+- Ships stop bombarding colonies they've already captured.
+
+Combat & Orders
+---------------
+- Attack orders no longer silently cleared by the UI. Ships that are
+  told to attack will keep attacking.
+- Fleet attack paths now compute correctly with debug logging available.
+- Storm concealment effects properly clear after fleet warps.
+- Combat reports condensed: one line per blueprint type with count
+  instead of listing every individual ship.
+
+Component Auto-Upgrade
+----------------------
+- Ship components auto-upgrade to the latest researched tier while
+  preserving mount sizes. Retrofitting keeps your fleet current
+  without manual redesign of every component slot.
+
+Intelligence Operations
+-----------------------
+- All four intelligence operations now functional: sabotage, planet
+  condition effects, technology theft, and diplomatic manipulation.
+- Spy-focused races like the Harmari can now leverage their intelligence
+  advantage.
+
+[March 22 2026]
+
+Shields Fixed!
+--------------
+- Shields were never working — wrong capability name lookup meant shields
+  were silently ignored in combat. All those shield generators you've been
+  building? They work now.
+
+Boarding & Ship Capture
+-----------------------
+- Boarding phase handler was never loaded — boarding actions were silently
+  skipped. Now registered and functional.
+- Boarding overflow: only consumes the components needed per capture instead
+  of eating all boarding strength.
+- Captured ships show in the combat report.
+
+Cloaking Fixes
+--------------
+- Ships now properly decloak after warping out of a storm system.
+- Storm concealment no longer persists after leaving the storm.
+
+Warhead Fix
+-----------
+- Warheads (kamikaze weapons) were double-firing — once as a regular weapon
+  and once as a kamikaze strike. Now fires only as intended.
+
+Combat Log Improvements
+-----------------------
+- Resizable combat log window with selectable text.
+- Copy Log button for sharing combat details.
+- Unit positions shown in the combat log.
+
+Plague Improvements
+-------------------
+- Plague bombs spread through the logistics hub across the solar system.
+  Take out the hub to stop the spread.
+- AI decision tree now handles plague response strategies.
+
+[March 21 2026]
+
+Parallel Processing
+-------------------
+- AI empires now process in parallel for faster turn times. Each empire
+  thinks simultaneously instead of waiting in line.
+- Per-system movement and combat also run in parallel.
+- Significant turn time improvements on large maps with many empires.
+
+Capability Stacking Rules
+-------------------------
+- Component bonuses now stack according to their defined rules (highest,
+  sum, average, etc.) instead of a single mode. Different component types
+  can define how their bonuses combine.
+
+Warp Fixes
+----------
+- Fixed ships unable to warp between systems.
+- Added exception handling for edge cases in warp movement.
+
+Save/Load Fix
+-------------
+- Turn number now shows correctly on the top bar after loading a save.
+
+[March 20 2026]
+
+Plague System
+-------------
+- Plague bombs are now properly blocked by planetary shields.
+- Plague save/load working correctly — plague state persists across saves.
+- Mines correctly apply concealment in combat.
+
+[March 19 2026]
+
+Shield Buster Weapons
+---------------------
+- New bombardment weapon line (3 tiers) that bypasses planetary shields. Each
+  hit drains the shield pool and causes feedback damage to a random shield
+  generator facility. The answer to heavily shielded colonies.
+
+Bombardment Fixes
+-----------------
+- Bombardment weapons now actually fire during combat. Previously, bombardment-
+  only components were silently skipped because the combat engine only looked
+  for regular weapon components.
+- Bombardment weapons now respect their own range (seeker-type busters can
+  fire at range; direct-fire weapons like napalm must be at the colony).
+- Plague bombs are now properly blocked by planetary shields.
+- Colonies now require both zero population AND all facilities destroyed to be
+  eliminated. A colony with no people but standing buildings is "vulnerable to
+  capture" instead of instantly destroyed.
+
+Bombardment Weapon Renames
+--------------------------
+- Spaceport Buster → Logistics Buster
+- Radiation Bomb → Colony Irradiator
+- Smart Bomb RD → Depot Buster
+
+Combat Sides Fix
+----------------
+- Attacker/defender assignment is now per-empire, not per-unit. If any of your
+  ships moved to a position, your entire empire is on the attacker side.
+  Fixes cases where split fleets from the same empire ended up on different
+  sides of a battle.
+- Colony owners are always defenders unless they initiated the attack.
+
+Warp Interception Removed
+-------------------------
+- Ships can no longer be prevented from warping by hostile forces at the same
+  position. This caused deadlocks after stalemates where neither side could
+  leave or fight.
+
+Weapon Platforms Rework
+-----------------------
+- Weapon platforms no longer deploy as individual units on the combat grid.
+  They now form an aggregate colony defense layer that fires from the colony
+  position before ship weapons fire.
+- Damage is tracked per-platform (shields → armor → chassis). When one
+  platform is destroyed, overflow damage hits the next.
+- Destroyed platforms are individually removed from colony cargo after combat.
+- Combat replay now shows colony defenders with platform counts.
+
+Emergency Build
+---------------
+- New "Emergency Build" toggle on the construction queue. Doubles production
+  speed at 50% higher resource cost, usable for up to 10 turns. After use,
+  enters a cooldown (production halved) equal to the turns of emergency used.
+
+Repair Rate Increases
+---------------------
+- Repair Bays and Spaceyards now repair much faster. Repair Bays also repair
+  the ship they're installed on (previously only repaired other ships nearby).
+
+Colony Badges
+-------------
+- Colonies now show dynamic icon badges in the selection panel: Homeworld,
+  Blockaded, Plague, Planetary Shield (with HP), Fortified (platform count),
+  Rioting, Building (item + progress), Shipyard, Logistics Hub, Resupply
+  Depot, Hospital, Garrison, Mines/Satellites in storage.
+- Badges have visibility levels — enemies only see public badges, allies see
+  more, and some are owner-only.
+
+AI Ship Design Improvements
+---------------------------
+- AI now values weapon range and mass-efficiency when choosing weapons, not
+  just raw damage. Each AI race has distinctive weapon preferences matching
+  their personality (was mostly beams for everyone before).
+- AI combat ships now fill remaining mass with weapons first instead of
+  over-investing in supply storage.
+
+Torpedo Fix
+-----------
+- Anti-Matter and Quantum Torpedoes no longer incorrectly classified as seeker
+  weapons. They fire as direct-fire weapons as intended.
+
+Intelligence System Fix
+-----------------------
+- Intelligence projects were not being loaded into the game, causing the
+  entire intelligence system to silently fail. Now working.
+
+Facility Organization
+---------------------
+- Facility categories reorganized for clearer grouping in the construction
+  queue (colony boosters, system boosters, resource storage, etc.).
+
+Other Fixes & Changes
+---------------------
+- Orders button now visible on all units (was hidden when no orders existed).
+- Research and build time estimates now show "X turns" instead of years.
+- Exceeding max engines on a ship design is now a hard error instead of a
+  warning.
+- Stale attack orders auto-clear when the target no longer exists.
+- Resupply command now only routes to colonies with actual resupply depots.
+- Hospital happiness bonus reduced from 2/4/6 to 1/1/1 across tiers.
+- Ship health now correctly uses chassis base HP instead of always defaulting
+  to 100.
+- Mines and mine sweepers now work via the scripting system.
+
+[March 17 2026]
+
+Weapon Mounts
+-------------
+- Weapons can now be installed in different mount configurations that scale
+  damage based on ship size:
+  - Standard: no modifier, available on all ships and bases.
+  - Large (L): 2x damage, requires destroyer-size or larger (or space station+).
+  - Heavy (H): 3x damage, requires cruiser-size or larger (or battlestation+).
+  - Massive (M): 5x damage, requires battleship-size or larger (or starbase+).
+- Larger mounts cost more resources and supply to install, but the damage
+  scaling makes big ships meaningfully more dangerous.
+- Mount codes (L, H, M) are shown in the ship designer UI next to weapons.
+
+Accuracy & Evasion Overhaul
+---------------------------
+- Combat now uses a base 50% hit chance modified by sensors and evasion,
+  replacing the old flat accuracy percentages. Weapons have an accuracy
+  modifier that gets added to this base.
+- You now need sensor investment to hit reliably. Ships with ECM and evasion
+  systems will be significantly harder to hit.
+- All weapon accuracy values rebalanced around the new system.
+
+Fighter Overhaul
+----------------
+- Fighters now have intrinsic evasion bonuses based on size: small +80%,
+  medium +70%, large +60%. This makes fighters much harder to hit with
+  conventional weapons.
+- New fighter-specific components: Targeting Arrays (I-III, +10/20/30%
+  accuracy) and ECM suites (I-III, +10/20/30% evasion).
+- Fighters and mines can now be stack-built (multiple per production cycle).
+
+Point Defense Rework
+--------------------
+- Point defense weapons now have explicit targeting limits: they only engage
+  targets under 200 tons (fighters, missiles, seekers).
+- PD range, accuracy, and damage now scale by tier, making higher-tier PD
+  a meaningful upgrade.
+
+Research Tree Reorganization
+----------------------------
+- Research categories restructured for clarity. "Applied Science" is now
+  split into Colony Development, Defense Systems, Sensors & Recon, Unit
+  Construction, and Logistics.
+- Several research lines trimmed or consolidated to reduce tech sprawl
+  (e.g. Biology 9→1, Chemistry 7→2, Physics 9→4, Psychology replaced by
+  Political Science).
+- Empires now start with 20,000 research points to help with early-game
+  research pacing.
+
+Colony Facility Changes
+-----------------------
+- Morale facilities now require Political Science instead of Psychology.
+- Habitat and ecosystem facilities now require Planet Utilization tiers
+  instead of Terraforming, making them accessible earlier.
+
+Repair Priority
+---------------
+- Damaged ships now repair hull integrity (Health) before repairing
+  individual components, making post-battle recovery more effective.
+
+Movement & Fleet Fixes
+----------------------
+- Fixed pathfinding bug where units could get stuck in their own position.
+- Fleet engagement logic simplified — only units with active attack orders
+  at their target's location count as engaged.
+
+[March 14 2026]
+
+Combat Fix
+----------
+- Ship-to-ship combat is now fully functional. Weapons fire, point defense,
+  boarding actions, kamikaze attacks, troop landings, and orbital bombardment
+  all work correctly during the combat action phase.
+- Previously, the combat phase scripts (WeaponsPhaseHandler, PointDefense,
+  Bombardment, Boarding, Kamikaze, Troops, etc.) were not registered in the
+  mod package manifest and were never loaded. Ships would move toward each
+  other in combat but never fire.
+
+Storm Fixes
+-----------
+- Subspace Rift teleportation now works correctly. Ships entering a rift are
+  immediately teleported to a random position in a nearby system.
+- Fixed storm effects not triggering due to incorrect definition lookup
+  (storms are StormDefinition, not CelestialDefinition).
+- Fixed crash when reading storm parameters from JSON (JsonElement values
+  now handled correctly).
+
+Fleet Movement Fix
+------------------
+- Fixed a bug where fleet movement would eject all ships from the fleet.
+  The unit position delegation system (IUnit.Group) was conflicting with
+  the movement processor which manually set each ship's position. Fleet
+  movement now correctly updates only the group's position, and member
+  units derive their position through delegation.
+
+Modding API: Context Sub-Objects
+--------------------------------
+- The script context (ctx) now organizes operations into focused sub-objects
+  for a cleaner, more discoverable API:
+  - ctx.Units      — unit creation, destruction, blueprints, queries
+  - ctx.Fleets     — fleet creation, management, membership
+  - ctx.Systems    — system queries, grid access, warp points, exploration
+  - ctx.Movement   — intra-system movement, warping, pathfinding
+  - ctx.Combat     — damage, healing, capability recalculation
+  - ctx.Colonies   — colony lifecycle, facilities, colonization checks
+  - ctx.Cargo      — cargo loading, unloading, deployment, transfers
+  - ctx.Celestials  — planet/moon creation, terraforming, resources
+  - ctx.Messages   — empire and player notifications
+- Core operations remain flat on ctx: Log, RaiseEvent, GetEmpire, Distance,
+  Random, Galaxy, TurnNumber, Definitions, Settings, etc.
+- New methods: ctx.Movement.MoveUnitToSystem() and MoveFleetToSystem() for
+  direct system-to-system transfers (teleportation, anomalies).
+
+[March 13 2026]
+
+Colonize Nearest Deduplication
+------------------------------
+- The "Colonize Nearest" script command now skips planets that are already
+  targeted by another colony ship from the same empire. Works for both
+  player-issued orders (colonization.target_planet_id) and AI orders
+  (ai.colonization.target_planet_id). Colony ship orders now mirror target
+  info into unit CustomProperties so the script layer can see it.
+
+Storm Effects
+-------------
+- Storms are now fully functional with on-enter and per-turn effects:
+  - Subspace Rift: Immediately teleports the fleet/unit to a random empty space
+    in a nearby system (up to 3 warp-lane hops away) on entry. Uses BFS to find
+    reachable systems and picks an unoccupied grid position. Subspace rifts are
+    entry-only (no per-turn effects) and do not grant environment concealment.
+    Owner receives a message: "Fleet X has encountered an anomaly and has been
+    relocated to X,Y of the system."
+  - Nebula Cloud: Randomly resupplies units 10-100 supply points on entry and
+    each turn they remain inside.
+  - Plasma Storm: Deals 2-8 damage to 1-3 random operational components on
+    entry and each turn.
+  - Radiation Storm: Deals 1-5 damage to 1-2 random operational components on
+    entry and each turn.
+  - Ion Storm: 30% extra miss chance for attackers in combat. Shields are
+    disabled for units fighting inside the storm.
+- Storm effects trigger via the solarsystem.entity.moved event (on-enter) and
+  the turn.end event (per-turn for units remaining in storms).
+
+Unit Container Delegation (IUnit.Group)
+---------------------------------------
+- Units now hold a runtime reference (IUnit.Group) to their parent fleet.
+- Unit.Position delegates to the group's position when in a fleet, falling back
+  to the unit's own GridPosition when solo. Unit.SystemId similarly delegates.
+- Setting a unit's Position directly auto-removes it from its group, since it
+  is no longer co-located with the fleet.
+- SyncUnitPositions() removed — no longer needed since position is derived from
+  the container.
+- Group hydration (SetUnits, AddUnit, RemoveUnit, ClearUnits) all maintain the
+  Group reference. SetUnits wires it on deserialization.
+- Applied to both Unit and DeployableUnit.
+
+Concealment Refactor
+--------------------
+- Concealment changed from a single Concealment? property to a
+  List<Concealment> Concealments, allowing units to have multiple simultaneous
+  concealment types (e.g. "cloak" + "environment").
+- Detection (CanSee) now requires the viewer to defeat ALL concealment types on
+  a target. Each type needs a matching anti{Type}Level capability >= the tier.
+- Combat decloak only removes "cloak" type concealments, preserving other types
+  like "environment" from storms.
+- Non-subspace storms grant "environment" type concealment (tier 1) to units
+  inside them. Concealment is removed when the unit exits the storm.
+- Long Range Scanners (all tiers) now have antienvironmentLevel capability to
+  detect units hidden by storm environment concealment.
+- Long Range Scanner descriptions updated to note automatic blueprint scanning
+  of nearby units.
+
+Data-Driven Build Requirements
+------------------------------
+- Added RequiresCapabilitiesToBuild field to UnitDefinition. This is an array
+  of capability keys that the build location must have for the unit type to
+  be constructable there. Empty array means anything can build it.
+- Ships, bases, and drones now require "shipProduction" capability to build.
+  Fighters, mines, satellites, troops, and weapon platforms have no restriction.
+- Build queue (ConstructionQueueViewModel) checks the unit's required
+  capabilities against colony facilities or spaceyard unit capabilities.
+  Blueprints that can't be built show a "[Requires Shipyard]" tooltip.
+- This replaces the old hardcoded IsShipUnitType check, enabling modders to
+  create tiered or specialized construction facilities.
+
+[March 12 2026]
+
+Facility Implementations
+------------------------
+- Matter Reprocessor is now functional: when a colony's resource extraction
+  would push a resource over storage capacity, the overflow is converted into
+  the resource with the most available space. Only triggers on actual overflow,
+  so zero downside when resources aren't capped. Efficiency bumped to
+  85% / 92% / 98% across tiers I-III.
+- Reclamation Foundry is now functional: colonies with this facility recover
+  bonus resources when scrapping ships or facilities. Uses the highest-tier
+  foundry on the colony (30% / 50% / 70%). Works for player scraps, AI scraps,
+  and shipyard scrap orders.
+
+Mine Sweeping
+-------------
+- Ships with Mine Sweeper components now passively sweep mines when entering
+  a mined position. Sweep capacity is summed across all ships in a fleet
+  (minesweepRate is additive). Swept mines are removed before the remaining
+  mines detonate, so a well-equipped fleet can clear a minefield without
+  taking damage.
+- Both the sweeping empire and mine owners receive messages about swept mines.
+
+Repair Bay Components
+---------------------
+- Repair Bay ship components (externalRepairRate) now contribute to the
+  external repair pool alongside spaceyard components. Ships with repair
+  bays can repair friendly ships at the same position at turn end.
+
+Crew Support & Bridge Mechanics
+--------------------------------
+- Ships now require operational bridge, crew quarters, and life support for
+  full movement. If any crew support component is destroyed or missing, the
+  ship is limited to 1 movement point per turn.
+- All-in-one computers (Gemini, Copilot, Claude) cover all three roles — if
+  destroyed, the ship loses bridge + crew + life support simultaneously.
+- In combat, destroying a ship's bridge (command capability) makes it dead
+  in space — 0 movement for the rest of the battle.
+- Destroyed engines now properly reduce movement points (previously
+  MaxMovementPoints was set at creation and never recalculated).
+
+Tutorial & UI Updates
+---------------------
+- Tutorial dialog text now uses dynamic name tokens ({facilityBase:id}) so
+  facility names automatically match mod definitions instead of being
+  hardcoded. Token resolution happens at display time via TutorialHelpers.
+- Updated all tutorial scripts (Wayward1, 1B, 2, 2B) for renamed facilities:
+  Space Port → Logistics Hub, Mineral Miner → Mineral Extraction Facility,
+  Ship Training → Crew Academy, Fleet Training → Command School, etc.
+- Updated UI tooltips and option labels across SelectionPanel,
+  EmpireOverviewPanel, and OptionsDialog to reflect renamed facilities.
+
+[March 11 2026]
+A little more tutorial progress
+
+[March 10 2026]
+
+Tutorial Rework (In Progress)
+-----------------------------
+The tutorial system is being reworked and is actively in test/development.
+The chapters are sorta playable and being iterated on. Forward chapters
+Would love feedback on script content and playtesting.
+
+- W1B (Research & Ship Design): split warp step into select → warp → complete
+  flow, fixed submit turn staying locked during the warp step, fixed chapter
+  transition to W2 (CheckWarpChapterTransition was reading wrong event keys)
+- Added UI events across 15+ panels (blueprints, research, diplomacy,
+  intelligence, fleet management, cargo, deploy, retrofit, etc.) so tutorial
+  scripts can detect player interactions
+- Added TutorialHighlight support to construction panel Facilities tab
+- Fixed TutorialMaster event routing for ui.blueprint.selected and 9 other
+  game events needed by later chapters
+- Proactive audit of W3-W13 caught and fixed 3 blockers before playtesting:
+  W3 wrong event name (diplomacy.trade → diplomacy.treaty), W5 wrong
+  highlight target (blueprints-new → blueprints-create), W12 inconsistent
+  payload key (player_won → player_victory)
+- All 17 chapter scripts annotated with design notes, step flow diagrams,
+  event handler summaries, and testing notes
+- New docs/design/tutorial-defects.md tracking common defect patterns
+- Updated docs/modding/event-types.md with 51 new UI interaction events
+- Updated docs/modding/scenarios/tutorial-system.md with scenario window
+  patterns
+
+[March 5 2026]
+
+Dynamic Resource System
+-----------------------
+- Resources are now fully data-driven — mods can add, remove, or replace the
+  base resources (minerals, organics, radioactives)
+- Resource definitions loaded from JSON with extraction capabilities, storage
+  capabilities, multiplier keys, colors, and icons
+- Turn processing dynamically iterates all defined resources instead of
+  hardcoding three resource types
+- AI resource analysis, bottleneck detection, and affordability checks work
+  with any number of resource types
+- Resource report, income, expenses, and storage capacity calculations
+  are fully dynamic
+- Definition classes (CelestialResources, ResourceProduction, ResourceConfig)
+  converted to dictionary-backed types for mod extensibility
+- COMBAT ship capture mechanics implemented
+
+[March 4 2026]
+
+Combat Replay Improvements
+--------------------------
+- Seekers (missiles/torpedoes) now render in the combat replay as colored
+  ovals with a glow trail, rotating toward their target
+- Each seeker is labeled with its empire prefix, weapon name, and sequence
+  number (e.g., "QG-Capital Ship Missile I-001")
+- Bolt weapons (torpedoes, meson blasters, cannons) render as small diamond
+  projectiles traveling from shooter to target — visually distinct from beams
+- Combat replay now captures a frame per phase (Movement, Seekers, Point
+  Defense, Weapons, Bombardment) instead of only at round boundaries
+- Replays saved to Documents/GalaxyTakeover/Replays/ instead of next to exe
+
+Weapon Reload Times
+-------------------
+- All weapons now have reload/cooldown times:
+  warheads fire once (0), beams/cannons reload in 1 round, torpedoes in 2,
+  missiles in 3, tachyon in 4, massive weapons in 30
+- Seeker weapons now define seekerSpeed and seekerHealth capabilities
+
+Seeker Combat Overhaul
+----------------------
+- Seekers are now full entities (IEntity + IOwnable) with custom properties
+  and capabilities — scripts can modify seekers in flight
+- Smart targeting: seekers spread across enemies at launch instead of all
+  locking the same target (estimates incoming damage vs target HP)
+- Seeker reacquisition: if a seeker's target is destroyed mid-flight, it
+  locks onto the nearest surviving enemy instead of expiring
+- Seekers bypass multiplex tracking — they're autonomous once launched
+- Combat continues while seekers are in flight, even if the launching
+  ship is destroyed
+- Victory check accounts for all entity types: ships, fighters, satellites,
+  bases, and seekers in flight
+
+IOwnable Improvements
+---------------------
+- Added IsOwner(IEmpire) and IsOwner(Guid) default methods to IOwnable
+- Works on any owned entity: units, colonies, bases, deployables, seekers
+
+Colony Combat Deployment
+------------------------
+- Colonies now deploy fighters and weapon platforms from cargo into combat
+  as defending units, positioned at the colony on the combat grid
+- Weapon platforms are stationary (no movement) with infinite supplies —
+  they fire at attackers from the colony's orbital position
+- Fighters launch from the colony and can move to engage attackers
+- Destroyed units are automatically removed from colony cargo after combat
+- Weapon platforms changed from TroopUnit to DeployableUnit entity class
+  so they have proper components, weapons, and combat capabilities
+
+Enemy Design Viewer
+-------------------
+- You can now inspect enemy ship blueprints from the Blueprints panel
+- Shows components, costs, movement, shields, cargo, and supply capacity
+- Only reveals designs your empire has encountered
+- Enemy designs now display the correct race-specific ship artwork
+- Blueprints are now owned entities — auto-cleanup when obsolete designs are deleted
+
+Expanded Starting Blueprints
+-----------------------------
+- Quickstart now gives you two corvette variants: one kinetic-armed, one
+  missile-armed — more opening strategy options
+- New starter blueprints: Space Yard Station and Defense Outpost available
+  from the start in all game modes
+
+Base Capacity Increase
+----------------------
+- All base chassis can now mount significantly more components:
+  - Outpost: 200kT -> 500kT
+  - Space Station: 500kT -> 1000kT
+  - Battlestation: 1500kT -> 2500kT
+  - Starbase: 2500kT -> 4000kT
+- Base special capabilities (repair bay, carrier, shipyard) are now provided
+  by components you install, not locked to specific base types
+
+Missile Research
+----------------
+- Missile tech now starts at level 1, making missiles available earlier
+
+Construction Queue Cleanup
+--------------------------
+- Removed the separate "Ships" tab — all buildable blueprints are now in
+  a unified "Units" tab grouped by category
+- Cleaner, simpler navigation
+
+Component & Facility Descriptions
+----------------------------------
+- All engines now describe their movement bonus (e.g., "Chemical: No bonus",
+  "Ion: +1 movement")
+- Computer descriptions clarify cost variants vs tech tiers
+- Shield descriptions are more distinct per type
+- Cargo bays mention what they can carry (troops, fighters, mines, etc.)
+- Facilities now clearly state when "only the highest tier takes effect"
+  or when effects are system-wide
+- Medical, Pacification, Terraforming, and Value Improvement facilities
+  have clearer descriptions of what they actually do
+
+Facility Upgrade Groups
+-----------------------
+- All storage facilities (Mineral, Organic, Radioactive, Cargo) now have
+  proper upgrade grouping — upgrading replaces the old tier automatically
+- Training, colony improvement, and other tiered facilities also properly
+  grouped for upgrades
+
+Weapon Platform Fix
+-------------------
+- Weapons that should be mountable on weapon platforms now correctly use
+  the "unit.weapon.platform" unit type (several were misconfigured)
+
+Treaty Awards
+-------------
+- Treaty agreements now properly grant their associated rewards
+
+AI Improvements
+---------------
+- AI now designs and builds orbital construction bases (space yards) to
+  expand shipbuilding capacity beyond colonies
+- AI warships now carry supply storage (15% of mass), preventing them from
+  stranding in deep space on multi-system operations
+- AI colony ships carry supply storage alongside cargo, preventing them
+  from running out of fuel on long colonization trips
+- AI builds more warships in both expanding and peaceful postures
+  (minimum 3 warships instead of 1)
+- AI spends excess mineral stockpiles on research facilities instead of
+  hoarding — accelerates tech progression in the mid/late game
+- AI prioritizes resupply depots when expanding to new systems
+- AI reserves idle colonies for ship production when stockpiling minerals
+- AI fleet rallying and staging improvements for coordinated attacks
+
+Modding
+-------
+- New FacilityUpgradeAdvisor script: maps research techs to facility
+  upgrade opportunities, fires "ai.facility.upgrade" event for mods to
+  customize upgrade recommendations per race
+- New "ai.facilities.consider.upgrades" event lets scripts influence
+  which facilities the AI upgrades and when
+- New helper extensions available to scripts: ColonyExtensions, UnitExtensions,
+  FacilityHelper, ColonizationHelper, NavigationHelper, ResourceHelper
+
+Self-Play Testing
+-----------------
+- AI self-play metrics now break down unit counts by type (colony ships,
+  warships, other) for better analysis
+
+[March 3 2026]
+
+Command Bar Overhaul
+--------------------
+- Shared "cmdbar" style class ensures uniform button heights (28px) across all
+  command bars (ship, colony, and any future bars)
+- SplitButtons (Build Queue, Cargo, Colonize) no longer render taller than
+  regular buttons
+- Both ShipCommandBar and ConstructionCommandBar use the same shared styles
+
+Data-Driven Component Commands
+------------------------------
+- Components can now define UI commands in their JSON "commands" array
+- Commands automatically appear on the command bar and context menu when a unit
+  has the component installed
+- Grouped commands: use "group" + "isPrimary" to create SplitButton dropdowns
+  (e.g., Colonize button with Colonize Nearest sub-item)
+- The primary command IS the group parent — clicking the main SplitButton fires
+  it directly. Non-primary commands appear only in the dropdown.
+- Multiple components/mods can add sub-items to the same group
+- Command activation fires ui.command.{id}.activated events for script handlers
+- Removed hardcoded Colonize button — now driven by colony module component JSON
+
+Colonize Nearest (Script-Driven)
+--------------------------------
+- ColonizationHandler script now handles the "Colonize Nearest" command via
+  BFS through explored systems to find the nearest compatible planet
+- Script sets target data on the event, VM reads it back to issue the order
+- Fully data-driven: defined in component JSON, handled by mod script
+
+Context Menu Improvements
+-------------------------
+- Context menu commands now appear in the same order as the command bar:
+  Move, Warp, Attack | Resupply, Repair | Cargo | dynamic commands |
+  Clear Orders | Details
+- Added Repair to context menu (was missing)
+- Dynamic/component commands appear after a separator, matching command bar layout
+- Grouped commands show as submenu (e.g., Colonize > Colonize Nearest)
+
+Orders Button
+-------------
+- Orders indicator is now a clickable button with a flyout showing current
+  orders summary (was a non-interactive display element)
+
+Bug Fixes
+---------
+- Fixed: UnitCategory definitions not copied to game DefinitionProvider
+  (caused Move/Warp buttons to not appear on ships)
+- Fixed: Blueprint TotalSize was 0kT (missing calculation in CreateBlueprintUnchecked)
+- Fixed: Duplicate Colonize button (hardcoded + data-driven both showing)
+- Fixed: Command bar and context menu button colors now match for same commands
+
+Documentation
+-------------
+- Updated docs/modding/json-definitions.md with component commands schema
+- Updated docs/modding/api/commands.md with component-defined command examples
+- Updated docs/modding/event-types.md with ui.command.{id}.activated events
+- Updated docs/design/unified-command-framework.md with current implementation
+
+[February 25 2026]
+
+Colonize Nearest
+----------------
+- Colonize button is now a split button with a "Colonize Nearest" dropdown option
+- Automatically finds the nearest compatible uncolonized planet across the galaxy
+  and issues move + colonize orders (similar to how Resupply finds nearest depot)
+- Considers all terrain types the ship can colonize (rock, ice, ocean, gas)
+- Now only searches solar systems the player has already explored
+- Skips planets that another colony ship is already en route to colonize
+
+Galaxy Map
+----------
+- Fixed galaxy map not centering on home system when starting via Quick Start
+
+Blueprint List
+--------------
+- Blueprints within each category are now sorted by chassis type, then by name
+- Creating, copying, or upgrading a blueprint now selects the new design in the
+  list (previously the old design stayed highlighted even though the detail panel
+  showed the new one)
+
+Ship Commands
+-------------
+- Resupply and Repair buttons are now always enabled when a ship is selected
+  (previously grayed out when fully supplied or undamaged — but you might want
+  to send ships to a yard for retrofit)
+
+Empire Elimination
+------------------
+- Empires that lose all colonies are now properly eliminated
+- Remaining ships are scuttled (no colonies = no resupply)
+- All empires with diplomatic contact receive a notification
+- Player empires get a defeat message if eliminated
+- Eliminated empires are skipped in AI, production, research, and maintenance
+- Fires empire.defeated event for mod/script hooks
+- IsEliminated flag persists in save files
+
+Selection Panel
+---------------
+- Ships in the object list now show their chassis type (Destroyer, Corvette,
+  Light Cruiser, etc.) instead of generic "Ship"
+
+Combat Fixes
+------------
+- Bombardment now consumes weapon supplies (was free to bombard)
+- Ships with insufficient supplies skip those weapons during bombardment
+
+Research
+--------
+- Reordered research sub-items within areas for better progression clarity
+
+[February 24 2026]
+
+Resource Rebalance
+------------------
+- Reduced mineral dominance in the economy (~90% of spending was minerals)
+- Facilities rebalanced: Spaceport is now organic-heavy, Resupply Depot is
+  radioactive-heavy, Shipyards use all three resources
+- Weapons, shields, and engines flipped to ~30% mineral / 70% radioactive
+  (was ~70/30). Total costs unchanged, only the resource mix changed.
+
+AI Economy Fixes
+----------------
+- Fixed mineral bankruptcy: all colony role blueprints now start with a
+  mineral extractor before specialty facilities
+- Mineral crisis mode: when minerals are scarce, AI defers expensive
+  facilities (shipyard, resupply depot) and keeps building extractors
+- Colonization throttle: AI pauses colony ship production when too many
+  colonies lack spaceports and minerals are low
+- Resource converters: AI builds converters when minerals drop below 20%
+  storage and other resources are surplus
+
+Bug Fixes
+---------
+- Fixed: Unit destruction cleanup (empire lists, blueprint counts, groups)
+  now handled consistently via OnDestroy() instead of scattered code
+- Fixed: Phase shield research prerequisites corrected
+- Fixed: Colony chassis detection uses RequiredTraitCount properly
+
+[February 23 2026]
+
+Fighters & Troops
+-----------------
+- Full fighter component suite: weapons, armor, shields, sensors, ECM,
+  engines (afterburner), and cockpits for fighter-scale ships
+- Troop components: ground weapons, small-scale armor, shields, sensors,
+  and combat equipment for boarding and invasion units
+- Three carrier chassis (Light, Medium, Heavy) with fighter bay requirements
+
+Mines
+-----
+- Mine deployment and minesweeper components are now functional
+- Mines trigger when enemy ships enter their cell
+- Deploy mines from ships with mine layer components
+
+Armor System Expansion
+----------------------
+- New armor types: Emissive Armor, Scattering Armor, Stealth Armor
+- Armor now provides damage-type-specific resistances in combat
+- Rebalanced armor tiers across all levels
+
+Cargo Load & Unload
+--------------------
+- Cargo button is now a split button with three options:
+  - Transfer: Opens the full cargo transfer dialog (same as before)
+  - Load Cargo: Quickly fill your ship from a colony stockpile
+  - Unload Cargo: Drop all cargo at a colony
+- Pick which cargo types to load/unload (fighters, drones, population, etc.)
+- Ships can retrieve deployed units (fighters, drones, satellites, mines) back
+  into cargo from the system view context menu
+- Ships can deploy units from cargo into the system
+
+Black Holes
+-----------
+- Ships displaced by black hole gravity now automatically re-pathfind to
+  their destination instead of getting stuck
+- This re-pathing works for any displacement (stellar manipulation, etc.)
+- Black hole destruction now sends a log message to the unit's owner
+
+AI Improvements
+---------------
+- AI ships low on supplies now resupply before entering combat
+- Improved AI fleet management, research priorities, and ship design choices
+- AI personalities tuned per race (e.g., Jeskari aggression)
+
+Performance
+-----------
+- System view no longer redraws after every individual event during turn
+  processing — one final redraw at the end of the turn instead
+- Noticeably smoother turn processing in busy solar systems
+
+Ship Design
+-----------
+- Chassis now define required component traits (e.g., carriers must have
+  50%+ mass in fighter bays) instead of rigid slot counts
+- Gives more flexibility in ship design while keeping class identity
+
+Bug Fixes
+---------
+- Fixed: Population cargo on colony ships now shows the correct race portrait
+  instead of a question mark icon
+- Fixed: Component category display and sort order improvements
+
+[February 19 2026]
+
+Special Solar Systems
+---------------------
+Four new hazardous system types can now appear on the galaxy map, shown as
+diamond shapes instead of the usual circles:
+
+- Dead Systems: Cold, dim stellar cores surrounded by asteroid belts. No
+  habitable planets, but good for mining. Up to 3 per galaxy.
+
+- Pulsar Systems: Neutron stars with rotating radiation beams. Ships and
+  colonies caught in the beams take 25 damage per turn, and colonies lose
+  5% population. The beams rotate each turn so safe positions change.
+  Up to 2 per galaxy.
+
+- Magnetar Systems: Neutron stars that build up magnetic charge over time.
+  When charge reaches critical levels, a devastating surge fires — dealing
+  up to 60 damage with falloff by distance and wiping out up to 20% of
+  colony population in range. Watch for the growing pink glow as a warning.
+  At most 1 per galaxy.
+
+- Nebula Systems: Dense, colorful gas clouds that severely reduce scanner
+  range (~15% of normal). Great for ambushes, dangerous to navigate blind.
+  Six color variants. Up to 3 per galaxy.
+
+Cloaking
+--------
+- New Cloaking Device components (Tiers I-III, requires Cloaking research)
+- Toggle cloak on/off with the K key when a cloaked ship is selected
+- Cloaked ships consume supplies each turn to maintain the cloak
+- Ships automatically decloak when firing weapons in combat
+- New Anti-Cloak Sensors (Tiers I-III) let you detect cloaked enemies
+- Scanner Jamming: units with ECM can block enemy scanner sweeps in their cell
+
+Stellar Manipulation
+--------------------
+A full suite of single-use ship components for reshaping the galaxy:
+- Destroy or create storms, planets (up to Huge size), and warp points
+- Create a new star in a starless system, or destroy one
+- Collapse a star into a black hole (destroys everything, including your ship)
+- Collapse a black hole back to normal space
+- Convert a star system into a nebula, or dissipate an existing nebula
+- All stellar manipulation components are consumed on use
+- Every empire that has explored the affected system gets a notification
+
+Transport Ships
+---------------
+- Three new transport chassis: Small, Medium, and Large
+- Designed for cargo and troop bays — not combat capable
+- Each race now has unique transport ship art for all three sizes
+
+New Components
+--------------
+- Multiplex Tracking (II-V): Engage 2-5 different targets per combat round
+  instead of just one. After destroying a target, remaining weapons retarget
+  automatically. A major upgrade for heavily-armed warships.
+- Solar Collectors (I-III): Generate 5/10/20 supplies per turn from starlight.
+  Output scales with the number of stars in the system.
+- Quantum Reactors (I-III): Generate 100/250/500 supplies per turn anywhere,
+  even in deep space. Essential for long-range operations.
+- Supply Storage expanded to 5 tiers (was 3) for finer control over capacity
+
+Combat Improvements
+-------------------
+- Cloaked ships now decloak when firing, adding a tactical decision layer
+- Multiplex tracking lets ships retarget after a kill in the same round
+- Planetary shields absorb bombardment damage before it hits facilities
+- Transport ships deploy troops during the troop landing combat phase
+- Chassis size affects evasion: corvettes get +40% natural evasion,
+  large ships and bases are easier to hit
+
+Star & Galaxy Generation
+-------------------------
+- Blue Giant and Red Giant star types added to the generation pool
+- Stars now have spectral class, corona colors, and luminosity data
+- Special systems (dead, pulsar, magnetar, nebula) show as diamonds on
+  the galaxy map
+- Nebula systems display rich, layered gas cloud visuals filling the system
+- Pulsar beams, magnetar surges, and magnetar charge glow are all visible
+  as dynamic effects in the system view
+
+Emergency Save
+--------------
+- The game now attempts an automatic emergency save if it crashes,
+  so you won't lose your progress to an unexpected error
+
+[February 17 2026]
+
+Navigation Toolbar
+------------------
+- New Ship/Fleet/Colony cycling buttons on the toolbar (< > arrows)
+- Quickly find idle ships and fleets that need orders
+- Cycle through all your colonies with one click
+- Navigates to the system and selects the object automatically
+
+New Components: ECM & Target Sensors
+-------------------------------------
+- Ships now have natural ECM (electronic countermeasures) based on chassis type
+- New ECM and Target Sensor components available for ship designs
+- Research unlocks progressively better sensor and countermeasure tech
+
+Chassis Rename
+--------------
+- "Hull" terminology replaced with "Chassis" throughout the game for clarity
+
+Research Improvements
+---------------------
+- Research tree now shows what each tech unlocks (components, facilities, capabilities)
+- Easier to plan your research path when you can see the rewards
+
+Colony Context Menus
+--------------------
+- Right-click colonies for quick access to common actions
+
+Turn Processing
+---------------
+- Added a progress bar when processing turns so you can see what's happening
+- End-of-turn processing is noticeably faster
+
+UI Consistency
+--------------
+- "Open Construction Queue" renamed to "Build Queue" to match ship spaceyards
+- Cargo and Build Queue buttons now use matching icons on both colony and ship bars
+
+[February 14-16 2026]
+
+New Race: Quilon
+----------------
+- Added the Quilon race with unique traits, capabilities, and planet modifiers
+
+Combat & Movement Fixes
+------------------------
+- Fixed: Ships could fail to trigger combat when they should
+- Fixed: Attack orders on nearest target work correctly now
+- Fixed: Ships moving simultaneously no longer cause position conflicts
+- Fixed: Rare bug where colonization could fail silently
+- Fixed: Resupply and repair buttons work properly again
+
+Diplomacy
+---------
+- AI empires now have treaty request cooldowns (no more constant spam)
+
+[February 13 2026]
+
+Intelligence System (Work in Progress)
+--------------------------------------
+- New Intelligence panel for espionage operations
+- AI empires can now conduct intelligence ops
+- Intelligence fixes and UI work
+
+Colonization Fix
+----------------
+- Colonization research no longer incorrectly tied to atmosphere unlocks
+- Researching atmospheres and colonization are properly separate now
+
+[February 10-12 2026]
+
+AI Overhaul
+-----------
+- AI empires now research and upgrade to larger, more powerful ship designs over time
+- AI properly considers enemy territory for border defense (not just unexplored systems)
+- AI spending is smarter: military budgets scale with empire size and actual warship costs
+- AI colony ships carry appropriate population (10% of colony or 1 million, whichever is less)
+- Fixed AI empires getting stuck and not issuing orders
+- Fixed fleets displaying incorrectly on the galaxy map
+
+Race-Specific Ship Names
+-------------------------
+- Each race now has its own thematic ship naming pool (~2,450 names total)
+- Ships get lore-appropriate names instead of generic designations
+
+Retrofit Dialog
+---------------
+- Ship retrofit dialog now works - click a blueprint to upgrade your ship
+- Spaceyards can repair damaged ships
+
+Smaller Save Files
+------------------
+- Save games are smaller: temporary data no longer bloated save files
+
+Info Windows
+------------
+- Floating info windows (Research, Blueprints, etc.) now stay within the main game window
+
+[February 8-9 2026]
+
+Ship Upgrades
+-------------
+- Improved blueprint upgrade system for replacing older components
+
+Scrap, Retrofit & Analyze
+--------------------------
+- Ships at colonies with spaceyards can be scrapped, retrofitted, or analyzed
+- Recover resources from obsolete ships
+
+Planet Generation
+-----------------
+- Gas giants and other planet types can now be larger sizes (not just gas = big)
+- Moon population limits adjusted to be more reasonable
+- Fixed population bars not displaying correctly
+
+Balance
+-------
+- Resupply Depots and Space Ports no longer require research to build
+- Resupply storage moved to correct research category
+
+[January 28 - February 2 2026]
+
+Tutorial System
+---------------
+- New interactive tutorial to help new players learn the game
+- Guided walkthrough of core mechanics
+
+Diplomacy Improvements
+----------------------
+- Improved diplomacy interactions and AI treaty behavior
+
+Research Hints
+--------------
+- Tech tree shows hints about what technologies lead to
+
+Ship Details
+------------
+- Selection panel now shows who owns a ship when viewing foreign vessels
+
+Empire Colors
+-------------
+- Updated empire color palette for better visual distinction between players
+
+Homeworld & Generation
+----------------------
+- Fixed homeworld placement issues
+- Black holes are now rarer (were spawning too frequently)
+
+Performance
+-----------
+- Grid-based lookup system for faster solar system object searches
+- Script caching for faster mod loading
+
+Bug Fixes
+---------
+- Fixed: Research tree errors that could break the game
+- Fixed: Orbital bombardment not working correctly
+- Fixed: Save/load could lose data in certain scenarios
+- Fixed: Ship orders, production, and retrofit logic bugs
+- Fixed: Missing image assets no longer cause errors
+
+[January 20 2026]
+
+Modding: Visual Event Handlers
+------------------------------
+- Scripts can now reference ViewModels types for UI-related events
+- SystemObjectNode and other visual types available in scripts
+- Enables mods to hook into visual events like black hole visual effects
+
+Bug Fixes
+---------
+- Fixed: Save game loading now properly initializes all game services
+  (Previously could cause errors when loading saved games)
+- Fixed: Script compilation error for handlers using SystemObjectNode
+
+Under the Hood
+--------------
+- Large class refactoring for better maintainability
+- Fleet management extracted to dedicated FleetService
+- Galaxy generation extracted to GalaxyGenerationService
+- Selection state management extracted to SelectionService
+- Added comprehensive unit tests for new services
+
+[January 12 2026]
+
+Ship Supplies System
+--------------------
+- Ships now consume supplies when moving through space (grid movement)
+- Engines provide supply capacity (500 units per engine)
+- Ships without supplies are limited to 1 movement point per turn
+- Selection panel shows supply levels with "no fuel!" indicator when empty
+- Movement display shows turns to destination when ship has queued orders
+
+Resupply & Repair Commands
+--------------------------
+- New "Resupply" button on ship command bar - navigates to nearest friendly colony
+- New "Repair" button - navigates to nearest colony with a space yard facility
+- Commands calculate shortest warp path and issue movement orders automatically
+
+Ship Details Panel
+------------------
+- Selection panel now shows detailed ship stats: class, size, health, supplies, shields
+- Sub-tabs for Detail, Components (with health bars), and Cargo
+- Shows effective movement speed and turns to destination when orders are queued
+
+End Turn Timer
+--------------
+- Long-press End Turn button to access real-time timer options
+- Quick click still ends turn immediately
+- Timer speeds: 5 sec, 30 sec, 60 sec, 90 sec, 5 min, 10 min
+- "Disabled" option turns off automatic turn advancement
+- Countdown timer displays directly on End Turn button when active
+- Button turns red when timer is in last 10 seconds (warning)
+
+Facility Services (Resupply & Repair)
+-------------------------------------
+- Ships now automatically resupply when entering a colony with a Resupply Depot
+- Ships now automatically repair when entering a colony with a Space Yard
+- New event: colony.unit.enters - fires when units enter a colony's grid position
+- Efficient event handling - only fires when units actually reach colony locations
+
+Bug Fixes
+---------
+- Fixed: AI empire colonization messages no longer appear in player's message log
+- Fixed: Message log now properly filters messages by empire from initial load
+- Fixed: Resupply depots now work - ships are resupplied when they reach the colony
+
+Context Menu Improvements
+-------------------------
+- Context menus now display icons matching the command bar style
+- Fixed: Right-clicking on planets, stars, warp points, and storms now shows the correct
+  context menu (was incorrectly showing "Center View / Reset Zoom" in some cases)
+- Larger click targets on celestial objects - easier to right-click on small icons
+
+Galaxy Generation Fix
+---------------------
+- Fixed: Homeworld no longer always spawns on the edge of the galaxy during quick start
+  (was always picking systems farthest from center)
+
+[January 5 2026]
+
+Space Hazards & Navigation
+--------------------------
+- Black holes, nebulae, and other hazards now display warning indicators on the map
+- Ship pathfinding automatically routes around dangerous celestial objects
+- Hazard properties are data-driven - modders can define custom hazards with danger zones
+
+Galaxy Exploration Fixes
+------------------------
+- Fixed: Other empires now properly stay hidden until you actually observe them
+  (previously, just discovering a system could reveal empire locations)
+- Fixed: Quickstart now generates a unique galaxy each time instead of the same one
+
+[January 1-4 2026]
+
+Ship Speed Rebalance
+--------------------
+- Ship speed now calculated from engine count and ship mass
+- Engine slot counts adjusted across all hull types for strategic variety
+- Quickstart blueprints updated to reflect new engine balance
+
+Diplomacy Panel
+---------------
+- Race portraits and flags now display when viewing other empires
+- See who you're negotiating with at a glance
+
+Galaxy Map Improvements
+-----------------------
+- Enemy ships now visible on the galaxy map when you can observe them
+- Enemy colonies appear on the strategic map when observed
+- Map updates in real-time when ships warp to new systems
+- View ship movement paths when looking at systems along a planned route
+
+Combat System (New!)
+--------------------
+- Tactical combat on a 71x71 grid with positioning and movement
+- Point defense systems protect against missiles and fighters
+- Seeker/missile weapons launch guided projectiles
+- Colony bombardment from orbit
+- Ground combat - troops can land and capture colonies
+- Combat integrates into turn processing automatically
+
+Bug Fixes
+---------
+- Fixed: Ships now properly show on galaxy map after warping
+- Fixed: No more duplicate key errors when colonies share grid positions
+- Fixed: Colonization failure messages only go to the affected empire now
+
+[December 29 2025]
+
+Menu Bar Keyboard Shortcuts
+---------------------------
+- All menu bar panels now have keyboard shortcuts:
+  - B: Blueprints
+  - R: Research
+  - I: Intelligence
+  - D: Diplomacy
+  - L: Log (Message Log)
+  - E: Empire Overview
+  - S: Ships & Fleets
+  - Q: Construction Queue (when colonized planet selected)
+  - Escape: Close active panel
+- Tooltips updated to show "(Keyboard: X)" format for discoverability
+- Shortcuts are disabled when typing in text input fields
+
+Message Log Window
+------------------
+- New Log button on toolbar (keyboard shortcut: L) opens the message log
+- Tab filters: All, Communications, Construction, Colonization, Diplomacy, Research, Intelligence, Combat, Events
+- "This Turn" / "All Turns" toggle to view current turn messages or full history
+- Construction completions (facilities and ships) now appear in the log instead of popups
+- Colonization results appear in the log
+- Click a message to see full details in the right panel
+- "Goto" button navigates to the related system and selects the object (ship, colony, etc.)
+- "Mark All Read" clears unread indicators
+- "Open at turn start" checkbox (on by default) - automatically opens the log when a new turn starts with messages
+- Messages tagged with the turn number they occurred
+
+Ship Command Bar
+----------------
+- New unified command bar below the toolbar for issuing ship/fleet orders
+- Shows ship name with Move, Warp, Colonize, and Attack command buttons
+- Click a command button, then click the map to execute (Move to location, Warp through point, Colonize planet)
+- Custom targeting cursors appear when in command mode (blue for move, green for colonize, purple for warp)
+- "Clear Orders" button to cancel pending movement and warp orders
+- "Orders" indicator with tooltip showing pending orders summary
+- Cancel button and instruction text when in targeting mode
+
+Colony Command Bar
+------------------
+- Same row shows colony info when a colonized planet is selected
+- Displays facility slots, production rates, and queue item count
+- "Open Construction Queue" button for quick access
+
+Colonization Target Dialog
+--------------------------
+- When colonizing a location with multiple targets (planet + moons), a selection dialog appears
+- Shows which targets are compatible with your colony ship's terrain capabilities
+- Works from both command bar button and right-click context menu
+
+Floating Panel: Escape Key to Close
+-----------------------------------
+- Press Escape to close any open floating panel (Research, Blueprints, Diplomacy, etc.)
+- Works on both standalone windows and AvalonDock floating panels
+- Centralized keyboard handling in MainWindow for all floating windows
+
+Floating Panel: Position Memory
+-------------------------------
+- Panels remember their position after being closed
+- First open: centered on main window
+- Subsequent opens: restored to last position
+- Move a panel, close it, reopen - it returns where you left it
+
+[December 27 2025]
+
+Research & Resources: Bug Fixes
+-------------------------------
+- Fixed: Research facilities now properly generate research points each turn
+- Fixed: Resource bar updates immediately when income changes
+- Fixed: Research window refreshes when you build or scrap facilities
+- All resource displays now update in real-time
+
+Construction Queue: Item Selection
+----------------------------------
+- Click queue items to select them (radio button indicator shows selection)
+- Use Move Up/Down/Pause buttons on the selected item
+- Small X button on each row to remove items from queue
+- Selection persists after moving or pausing items
+
+Facilities Management: View & Scrap
+-----------------------------------
+- Right-click planet header in construction queue to view existing facilities
+- Right-click colonized planet in system view → "Facilities" menu option
+- View all built facilities with icon, name, category, and health
+- Scrap facilities to recover 50% of build resources (minerals, organics, radioactives)
+- Confirmation dialog shows resource return before scrapping
+
+Construction Queue: UI Improvements
+-----------------------------------
+- Added "Build Category" label above category buttons (Ships/Facilities/Units/Upgrades)
+- Planet header tooltip indicates right-click for facilities
+
+[December 26 2025]
+
+Research System Expansion
+-------------------------
+- Added 3 new research areas:
+  - Engine Overloading Weapons (requires Propulsion 4)
+  - Gravitational Weapons (requires Astrophysics 2)
+  - Stellar Harnessing (requires Astrophysics 1)
+- Updated component research requirements:
+  - Ionic Disperser: Engine Overloading Weapons 1-5
+  - Ripper Beam: High-Energy Discharge Weapons 1-4
+  - Incinerator Beam: High-Energy Discharge Weapons 5-7
+  - Graviton Beam: Gravitational Weapons 1-5
+  - Solar Collector: Stellar Harnessing 1
+
+Mod Support Improvements
+------------------------
+- Mods can now organize content across multiple files
+- Fixed issues with research prerequisites not loading correctly
+
+[December 24 2025 8:00pm pacific]
+
+Ship Designer: Component Info Popup
+-----------------------------------
+- Right-click any component (available or installed) to show a detailed popup
+- Displays icon, name, category, description, cost, size, and abilities
+- Click anywhere, press Escape, or click away to close the popup
+- Icons display with fallback to purple question mark for missing assets
+
+Ship Designer: Bulk Add/Remove
+------------------------------
+- Hold Shift while clicking to add/remove up to 5 components at once
+- Respects capacity limits (stops when ship is full)
+
+Ship Designer: UI Defaults
+--------------------------
+- Stack View is now enabled by default
+- Fixed "Only Latest" filter for size-variant components (Cargo/Drone/Fighter Bays)
+  These use small/medium/large instead of numeric levels and weren't filtering properly
+
+Component Assets
+----------------
+Added 15 new SVG icons for components:
+- Core: bridge, crew, life support
+- Weapons: point defense, shield depleter, ionic disperser, ripper, repulser
+- Utility: cargo, fighter bay, drone bay, mine layer, repair bay, solar collector, boarding party
+
+Data Cleanup
+------------
+- Sorted research_areas.json entries alphabetically by ID
+
+[December 24 2025 3:00pm pacific]
+
+Multi-Star System Support
+-------------------------
+- Systems can now have 1-5 stars (binary, trinary, quaternary, quinary)
+- Stars are positioned intelligently in the 3x3 center grid
+- Planets are kept outside the 3x3 center to avoid star collisions
+- Ring search algorithm finds valid positions for planets near occupied spaces
+
+Planet Generation Fixes
+-----------------------
+- Fixed planet-star collision: planets no longer spawn on same grid position as stars
+- Fixed gas planets generating without atmosphere despite RequiresAtmosphere=true
+- Improved collision avoidance using expanding ring search
+
+Modding: Event Phases
+---------------------
+- Mod scripts can now hook into events at Pre/During/Post phases
+- Enables mods to validate, modify, or react to game events
+- See docs/modding/scripting.md for details
+
+[December 23 2025]
+
+Loading Screen
+--------------
+- New splash screen while the game loads
+
+Under the Hood
+--------------
+- Script engine improvements for better mod support
+
+[Earlier December 2025]
+
+Cargo Transfer
+--------------
+- New cargo button for transferring goods between ships and colonies
+- Keyboard shortcut: T
+
+Movement Keyboard Shortcuts
+---------------------------
+- M: Move command
+- W: Warp command
+- C: Colonize command
+- Enter: End Turn
+
+AI Opponents
+------------
+- Non-playable empires added to opponent pool for more variety
+- Improved AI colonization - prioritizes compatible planets and home system
+
+Population Fix
+--------------
+- Fixed critical bug where homeworld population could crash due to incorrect
+  max population calculations from planet size
