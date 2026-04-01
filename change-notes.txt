@@ -1,6 +1,201 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[March 29-31 2026]
+
+Combat Balance
+--------------
+- Point-Defense rebalanced: damage curve 20 → 100 across 8 tiers
+  (was 10 → 20 across 5 tiers). Three new tiers (T6-T8) added.
+  PD accuracy boosted at lower tiers (70% → 85% at T1).
+  Point-Defense now properly shreds seekers and fighters at all tiers.
+- Point-Defense targeting fixed: maxTargetTonnage was never enforced
+  (always returned 0 for target tonnage). PD now correctly reads
+  chassis mass — can only target units ≤ 150 kT (corvettes, fighters,
+  seekers, drones, satellites). Cannot target frigates or larger.
+- Armor HP reduced across all families for better shield parity:
+  Standard armor: 50/125/200/275/350/425 (was 100/200/300/400/500/600).
+  Emissive armor: 75/150/225 (was 200/300/400).
+  Stealth armor: 75/150/225 (was 150/200/250).
+  Scattering armor: 75/150/225 (was 200/300/400).
+  Armor still wins single fights with higher HP/mass, but shields
+  now compete by regenerating between combats.
+
+Stellar Manipulation
+--------------------
+- Stellar manipulation commands now fully functional from the command
+  bar. Click a command, click the target (star, storm, planet, etc.),
+  and the ship will move to position and execute on arrival.
+- Rich notification messages with markdown formatting: destruction
+  events list exactly what was destroyed (planets, colonies, units).
+- E.R.A.S.E. device is now reactive — auto-triggers when a ship with
+  the capability is consumed by a black hole, sacrificing itself to
+  collapse the singularity.
+- Stellar manipulation blocked while cloaked (must decloak first).
+- Position validation: commands require the ship to be at the correct
+  location (star position for S.O.L., system center for Stellar
+  Ignitor, etc.).
+
+Command System
+--------------
+- Commands can now be queued: "move here, then do this." Orders panel
+  shows queued commands ("Then: Destroy Star"). Clear Orders clears
+  the full queue.
+- Command targeting improved: right-click context menus properly pass
+  target data. SplitButton flyouts close correctly when targeting
+  activates. Targeting cursor covers the entire system view.
+- Stationary units (weapon platforms, satellites) now properly process
+  their queued commands each turn.
+
+Colony & Conquest
+-----------------
+- Fixed colony ownership transfer crash (NullReferenceException) when
+  captured colonies had uninitialized staging area, garrison, or
+  production queue collections.
+
+UI Improvements
+---------------
+- Empire overview panel cleaned up and simplified.
+- Message log now renders rich markdown content with colored borders,
+  icons, and formatted text for stellar manipulation events and other
+  game messages.
+- Turn progress dialog now reliably appears during turn processing.
+
+AI Improvements
+---------------
+- AI transport production bug fixed: transport ship production was
+  silently skipped in single-threaded mode.
+- AI research selection bug fixed: tech priority sort was skipped when
+  no facility boosts existed, potentially selecting suboptimal tech.
+- Intelligence/espionage resource display fixed: empire dossier
+  stockpiles were always showing 0 (wrong resource ID keys).
+
+Modding
+-------
+- Scriptable command execution API: mod scripts can now issue any
+  component command programmatically via ctx.Commands.ExecuteCommand().
+  Supports move-then-execute sequences and custom command types.
+- Custom command types: mods can define IUnitCommand implementations
+  and queue them on units. Dispatched via "unit.command.dispatching"
+  event.
+- GameMessage API: scripts can send rich formatted messages with icons,
+  categories, and markdown content to the player's message log.
+- Asset cache moved to user-writable location — no more write failures
+  in Program Files installations.
+
+[March 28 2026]
+
+Combat Interception Fixes
+-------------------------
+- Fixed warp point combat bypass: units that arrived at a warp point
+  on a previous turn could warp through unchallenged, even with enemy
+  warships guarding the point. Now hostile presence unconditionally
+  blocks warping on both departure and arrival sides.
+- Fixed colonization bypass: colony ships could colonize planets at
+  grid positions defended by enemy weapon platforms or fighters. Now
+  colonies with weapon platforms or deployable combat units block
+  hostile colonization. Undefended colonies correctly do NOT block.
+- 19 warp combat tests + 10 colonization combat tests added as
+  regression suite covering war, peace, and alliance states.
+
+Ground Combat & Colony Capture
+------------------------------
+- Fixed population zeroing on colony capture. Militia death formula
+  (killed² × 1M + 10% war casualties) could exceed total population.
+  Pop loss now capped at 50% on capture, 25% on repelled invasion.
+- Militia capped at 50 per colony (was unlimited — 32B pop = 179 militia).
+- Captured colonies now properly transfer weapon platforms, cargo, and
+  population groups to the new owner. Previously weapon platforms showed
+  "?" icons after capture.
+- Troop survivor count fixed — was inflating by returning all troops
+  from non-destroyed stacks instead of trimming to actual survivors.
+- Ground combat balance values (militia cap, war casualties, pop loss
+  caps) now moddable via game-settings.json in basegame-troops package.
+
+Ungrouped Unit Bug Fix
+----------------------
+- Fixed 9 locations across base-game scripts where solo ships (not in
+  a fleet group) were invisible to game systems. Affected: self-repair,
+  spaceyard repair, storm damage, pulsar beams, solar flares, black hole
+  damage, star destruction, robo unit harvesting, and ship training.
+  Solo ships now properly participate in all system-level effects.
+
+Production Requirements
+-----------------------
+- Enforced requiresCapabilitiesToBuild on unit definitions. Ships and
+  spacebases require a spaceyard facility. Fighters, drones, satellites,
+  and weapon platforms build at any colony without a spaceyard.
+- Fixed weapon platforms showing "Stalled" at colonies without a
+  spaceyard. Weapon platforms now use facility production rate, not
+  ship production rate.
+- Carrier chassis now correctly requires spaceyard (was missing).
+  Drones no longer require spaceyard (was incorrectly set).
+
+Research Tree Fixes
+-------------------
+- Satellite research max level 10 → 3 (no unlocks past L3).
+- Ship construction research max level 10 → 9 (Baseship at L9 is cap).
+
+ML.NET Ship Design Integration
+-------------------------------
+- 170 ML-optimized design templates now active in all games. The AI
+  Ship Design Minister tries template-based designs first for combat
+  roles (Warship, HeavyWarship, Scout), falling back to generic designer
+  when no template matches.
+- Templates distributed per mod package by chassis type. Ship templates
+  in basegame-shiphulls/cache/, future fighter/drone templates will
+  auto-sort to their respective packages.
+- Design template loader scans all mod packages (mods/*/*/cache/),
+  making templates modder-extensible.
+- Expanded ML design matrix: every weapon × 6 defense combos × utility
+  variants (ECM, sensors, multiplex) × mount variants × all chassis ×
+  tech levels 1-10. Previously only tested 8 archetypes with "best"
+  weapon per category.
+
+AI Self-Play Training Improvements
+----------------------------------
+- Save games from human play sessions now seeded into selfplay. Player
+  metrics DB copied alongside save file so analysis can compare human
+  vs AI performance at the handoff point.
+- Human-vs-AI comparison report auto-generated: shows expansion rate,
+  fleet growth, tech research for human phase vs AI phase.
+- All game seeds randomized each cycle — no fixed baselines. Prevents
+  analysis from getting stuck on stale data.
+- AI conquest triggers added to all 15 races: when no colonizable
+  planets remain, switch to conquest mode instead of going dormant.
+- Weapon family alignment validated across 6+ races: ensuring ship
+  doctrines request weapons the race actually researches.
+- Stalemate rate trending down: 87% → 78% over 23 cycles.
+
+UI Improvements
+---------------
+- Colony panel overhauled: tabbed facilities/cargo view, scrap buttons,
+  larger fonts for readability.
+- Selection panel improvements: larger fonts, tab borders, bigger cargo
+  rows, identical cargo items stacked.
+- Fleet ship list enlarged with per-ship Remove button.
+- Troops stacked in cargo transfer dialog alongside deployables.
+- Build queue cleared on colony capture.
+- Save/load crash fixed: deserializer was replacing ThreadSafeList with
+  plain List, causing thread safety violations.
+
+Mock Combat & Balance Analysis
+------------------------------
+- Phase 1.5 balance report complete: weapon tier effectiveness curves,
+  per-component strictly-worse analysis, cross-tech matchups, mount
+  analysis (standard vs large vs heavy vs massive), JSON export.
+- Phase 2 advanced matchups: fleet compositions (support ship
+  effectiveness, ratio sweeps, size scaling), carrier operations
+  (fighter deployment verified working), boarding scenarios (net
+  resource value calculation).
+- Combat mechanics verification suite: 12 active tests confirming
+  emissive armor, shield regen, shield depleters, weapon range,
+  boarding capture, boarding vs security, boarding vs self-destruct,
+  accuracy vs evasion all working correctly.
+- Boarding bugs found and fixed: equality check for stalemate, self-
+  destruct now applies damage through proper pipeline instead of
+  unconditional mutual destruction.
+
 [March 27 2026]
 
 Combat Engine Stability — OOM & Stalemate Fixes
