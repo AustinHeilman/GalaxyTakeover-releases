@@ -1,6 +1,48 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 1 2026]
+
+New Races
+---------
+- 7 new alien races added, each with full AI, art, and personality:
+  - Myk'ael: Serpentine zealots. Theocracy government, bio-organic ships.
+  - Kohlareen: Crystalline diplomats. Merchant guild, crystal-hulled ships.
+  - Sijhai: Owl scholars. Research collective, angular observatory ships.
+  - Jha'mei: Blue bovine stampede. Tribal council, barrel-tank ships.
+  - Takirot: Spider crab defenders. Elder council, crab-body ships.
+  - Sandifer: Mantis hive swarm. Collective government, chitinous ships.
+  - Kol'lekt: Scavenger parody race. Federation, junk Frankenstein ships.
+- Each race includes AI personality, strategy docs, minister plugins,
+  and 35 SVG art assets (portrait, flag, ship chassis, fighters,
+  bases, drones, satellites, mines, weapon platforms, troops).
+
+Stellar Manipulation
+--------------------
+- Nebula manipulation (M.E.L.T. and Nebula Dispersal Array) moved to
+  the specialsolarsystems package alongside other stellar effects.
+- Black hole components moved to their own dedicated package.
+- System transit events added: system.entering, system.entered,
+  system.leaving, system.left — fired on any cross-system warp.
+- Nebula concealment now uses system transit events to properly apply
+  and remove concealment status as ships enter/leave nebula systems.
+
+Fixes
+-----
+- Fixed concealment visuals not updating after warping into a nebula
+  system. Storm handler was stripping concealment that the nebula
+  handler just granted.
+- Fixed fleet nodes never showing concealment status on the map.
+
+Modding
+-------
+- New scripting APIs: GameEvent.GetUnits() eliminates repeated
+  unit-vs-group branching in event handlers. Spatial queries:
+  GetUnitsAt(), GetGroupsAt(), GetUnits(expandGroups) for finding
+  units at specific positions.
+- System transit events (entering/entered/leaving/left) available
+  for mod scripts to react to cross-system movement.
+
 [March 29-31 2026]
 
 Combat Balance
