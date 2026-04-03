@@ -1,6 +1,44 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 2 2026 – Update 2]
+
+Diplomacy
+---------
+- Treaties can now be broken. Empires can unilaterally withdraw from
+  a treaty or declare war; the change takes effect when the turn is
+  processed (not immediately). Treaty-breaking can be disabled per
+  diplomacy state in configuration.
+- Fix AreHostile checking only one side of a diplomatic relation.
+  Previously the result depended on argument order — if one empire
+  had ignoreCombat and the other didn't, units could share a grid
+  position without combat. Both directions are now checked.
+
+Movement & Combat
+-----------------
+- Fix BattleQueue re-fighting the same position every movement step.
+  Per-step tracking now ensures combat only triggers for fresh
+  arrivals, not positions where a unit moved on a prior step.
+- Fix stale wave cleanup in BattleQueue.Drain — waves that produced
+  no combat were never removed, inflating iteration counts on
+  subsequent calls.
+- Fix bombardment edge cases from prior simplification: 0-pop
+  colonies with no facilities now yield instant attacker victory
+  instead of 30 empty rounds; unarmed troop carriers now enter the
+  combat loop so they can reach the colony before deploying troops.
+
+Scripting & AI
+--------------
+- Fix BaseAIHandler script calling Log() with 2 arguments (the mod
+  scripting API only exposes the 1-arg overload).
+- Diagnostic logging added for multi-empire no-hostile positions.
+
+Infrastructure
+--------------
+- Release workflow now supports manual runs via workflow_dispatch.
+- Selfplay temp dirs and *.db added to .gitignore.
+- Branch cleanup script uses reset --hard to handle rewritten history.
+
 [April 2 2026]
 
 Movement & Combat
