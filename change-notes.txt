@@ -1,6 +1,74 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 2 2026]
+
+Movement & Combat
+-----------------
+- BattleQueue system replaces the old inline combat position cache.
+  Units arriving at a contested position on the same movement step
+  fight as a coalition; units arriving on later steps queue as
+  sequential waves and must fight survivors before advancing. Fixes
+  a bug where units bypassed defenders at already-contested positions.
+- Optimal engagement range and kiting added to combat movement. Ships
+  calculate desired range from weapon loadout and will kite away if
+  the enemy closes inside that range.
+- Shields reset to full capacity at combat start.
+- Attackers no longer spawn on top of the colony in combat replays.
+- Bombardment fix: colonies with 0 population but active facilities
+  are no longer skipped during bombardment.
+- Satellites added as allowed unit type for capital ship missiles.
+
+Combat Replay Visuals
+---------------------
+- New replay effect types: SmallBeam, LargeBeam, and Flak.
+- Weapon visual effects now use draw_ traits (draw_smallbeam,
+  draw_beam, draw_largebeam, draw_bolt, draw_seeker, draw_flak)
+  instead of ID-based string matching.
+- Gravity Maul damage balanced and uses traits for effect types.
+
+New Races
+---------
+- Henzalex: Stoic automaton builders with angular ships. Full AI
+  personality, strategy, minister plugins, and 35 SVG art assets.
+- Engalar: Warrior-scholar reptilians with silver-crimson warfleets.
+  Full AI personality, strategy, and art assets.
+- Revised race and empire descriptions for all 27 factions.
+
+Elimination & Diplomacy
+-----------------------
+- Elimination now requires 0 colonies AND 0 living units (was
+  colonies only).
+- Rich elimination messages with empire portrait and flag, styled
+  markdown with side-by-side images.
+- First contact messages now include system info.
+
+Game Setup
+----------
+- Configurable neutral empire count independent of AI empire count.
+- Fix empire color conflicts between similar-looking races.
+
+UI & Quality of Life
+--------------------
+- Hazard zones are now passable with a movement penalty.
+- Logistics hub badge shown on planet details panel.
+- Blueprint upgrade now properly carries over mount sizes.
+- AI empires no longer fail blueprint naming when race definition
+  is missing.
+- Applied Political Science moved to Colony Development research
+  group.
+- GalaxyMap target type with galaxy map picker modal for
+  cross-system targeting commands.
+
+Infrastructure
+--------------
+- New log file created per app launch for easier debugging.
+- Save and replay directories created automatically before write.
+- Replay pruning on startup to clean old files.
+- Orphaned script cache files purged on startup.
+- Markdown rendering fixes: absolute image paths, fenced
+  containers, portrait/flag path rehydration.
+
 [April 1 2026]
 
 New Races
