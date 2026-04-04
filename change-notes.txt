@@ -1,6 +1,67 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 3 2026]
+
+Combat & Bombardment
+--------------------
+- AI fleets now properly bombard enemy colonies after winning space
+  combat. Previously, ships with regular weapons wouldn't fire on
+  colonies even when no defenders remained.
+- Bombardment damage increased — orbital strikes are now devastating
+  to colony populations, matching what a human player would expect.
+- Combat outcome feedback: AI empires now know how many colonies
+  they bombarded, population they killed, and facilities they
+  destroyed. Defenders know what they lost too.
+
+AI Ship Design
+--------------
+- AI empires now build bigger ships as tech allows. Previously they
+  were capped at light cruisers regardless of available research.
+  Expect to see battleships, juggernauts, and baseships in mid-to-late
+  game.
+- AI threat adaptation: empires now react to what's killing them.
+  Hit mines? Build mine sweepers. Facing fighters? Add point defense.
+  Shields blocking everything? Research better weapons. Ships getting
+  captured? Add security stations. Responses escalate with repeated
+  encounters.
+
+AI Fleet Behavior
+-----------------
+- Solo ship consolidation: newly built warships now join nearby
+  groups instead of flying solo. Idle solos in the same system
+  form up into proper fleets. Large empires consolidate more
+  aggressively.
+- Weapon evaluation API added for ship design — AI can now query
+  which weapons deal the most damage on which mounts at any range,
+  instead of guessing.
+
+AI Race Identity
+----------------
+- Updated strategy profiles for 9 races with distinct combat
+  doctrines: Padario (shock and awe), Bodzeen (carrier strike
+  groups), Harmari (intelligence warfare), Melians (fortress
+  defense), Sijhai (tech supremacy), Takirot (space base
+  fortifications), Sandifer (expendable swarms), Kollekt (armored
+  brawlers), and Aleeman (stealth mines and boarding).
+
+UI
+--
+- Facility build queue now warns when a system-wide facility (like
+  hospitals) is already built or queued elsewhere in the same system.
+
+Balance
+-------
+- Hospitals expanded from 3 tiers to 5, matching plague bomb levels.
+- Space base initial research cost reduced.
+
+Infrastructure
+--------------
+- TurnProcessor split into 10 partial class files for easier
+  maintenance.
+- Modding docs moved to ship with DevTools so modders have them
+  alongside the tools.
+
 [April 2 2026 – Update 2]
 
 Diplomacy
