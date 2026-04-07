@@ -1,6 +1,58 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 6 2026]
+
+Combat
+------
+- Fix: Weapon mounts now correctly apply damage scaling, range
+  bonuses, and accuracy bonuses during combat. Previously, a
+  heavy-mounted weapon did the same damage as an unmounted one.
+  This was a critical bug — capital ships and battle stations
+  with large mounts were no stronger than small ships.
+- Mount scaling reference:
+  - Ship mounts: Standard 1x, Large 2x, Heavy 3x, Massive 5x
+  - Base mounts: Standard 1x, Large 3x, Heavy 5x, Massive 7x
+  - Range and accuracy bonuses also scale with mount size.
+
+AI Ship Design
+--------------
+- New design recipe system: each race can define ship design
+  rules in a design-recipes.json file. Recipes specify weapon
+  preferences, engine requirements, defense ratios, and role-
+  specific components (mine bays, fighter bays, etc.). Gives
+  each race distinct ship design identity without ML training.
+- AI ships now prioritize engines. Previously, the AI would
+  build ships with only 1 engine, making them too slow to
+  reach enemies or bombard colonies. Ships now have 2-4
+  engines depending on hull size.
+
+AI Fleet Movement
+-----------------
+- AI fleets now move and warp correctly as groups. Previously,
+  individual ships in a fleet could get stuck or take different
+  paths.
+- AI fleets in the same system as an enemy now attack instead
+  of sitting idle.
+- Solo ships use proper pathfinding and warp correctly.
+- Clearing orders on a fleet now clears orders on all ships
+  in the fleet.
+
+Mod System
+----------
+- Mod content hash: a SHA256 fingerprint is computed after mods
+  load. Save files store the hash and warn on load if mods have
+  changed.
+- ML training workers now verify both DLL and mod content hashes
+  match the server before training, preventing stale worker
+  mismatches.
+
+Stability
+---------
+- Save files with duplicate unit IDs no longer crash on load.
+- Cleaned up stale per-ship movement data that could conflict
+  with fleet-level orders.
+
 [April 3 2026]
 
 Combat & Bombardment
