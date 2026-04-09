@@ -1,6 +1,96 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 7 2026]
+
+Diplomacy
+---------
+- New "Demand Surrender" diplomacy option. AI empires with overwhelming
+  military advantage (5x strength, target ≤3 colonies) can demand
+  surrender. Surrendering empire transfers all colonies and units.
+- AI races now have distinct diplomatic personalities — opinion
+  thresholds, cooldowns, war triggers, and peace evaluation are all
+  configurable per race in ai-personality.json.
+- AI will demand surrender from weakened enemies and evaluate surrender
+  demands using race-specific thresholds (never, homeworld_lost, or
+  numeric strength ratio).
+- Scriptable diplomacy evaluation: four new events (treaty.evaluate,
+  war.consider, peace.evaluate, surrender.evaluate) let race scripts
+  override all diplomatic decisions with per-race logic.
+
+AI Fleet Composition
+--------------------
+- AI now builds supply tenders and repair ships to extend fleet
+  range and survivability. Support ships are produced at ratios
+  (1 supply per 12 warships, 1 repair per 15) once 10+ warships exist.
+- AI composes mixed fleets with support ships instead of pure warship
+  blobs. Support ships are merged into combat groups at rally points
+  so supply redistribution and fleet repair actually work.
+- New design recipes for fleet support roles (supply tender, repair ship).
+  ShipDesignMinister auto-designs these when tech is available.
+- Design recipe system now supports exact component selection via
+  componentId field for modders (e.g., specify repair bays without
+  accidentally picking up space yards).
+
+Warp System
+-----------
+- Fix: Fleets blocked from warping by hostile forces at warp points.
+  Warp is a grid-space transition — combat triggers on entering the
+  tile, not when executing the warp. Removed incorrect interception
+  check that permanently blocked warps when enemies were present.
+- Fix: Solo units stuck at warp points during multi-system moves.
+  ExecutePendingWarp now falls back to MovementPlan.CurrentLeg.WarpPointId
+  when PendingWarpPointId is cleared between turns.
+- Design rule documented in code and CombatNotes.md: warp follows
+  the same arrival-based combat rules as all other grid movement.
+
+Dynamic Movement
+----------------
+- New: Destination-only movement mode for cross-system moves. Units
+  store a destination and dynamically A* pathfind each turn, adapting
+  to warp topology changes (new/destroyed warp points). Both modes
+  coexist — intra-system moves use pre-computed paths, cross-system
+  player moves default to dynamic routing.
+- Follows the same pattern as AttackTargetId pursuit: store target,
+  repath each turn via UpdateDynamicMovementPaths.
+- Persists across save/load (DestinationSystemId/DestinationPosition
+  on IUnit and IUnitGroup).
+
+Combat System
+-------------
+- Fix: Colony re-bombardment every turn. Fleets parked on enemy
+  colonies no longer auto-bombard — bombardment happens on arrival
+  only. To bombard again, issue an explicit attack command or move
+  away and back. Matches design rule: combat triggers on arrival.
+- Fix: Intercept orders no longer re-trigger combat every turn when
+  the unit is at the target position but didn't move. Units blockade
+  instead of re-engaging. Explicit EngageAtPosition (attack command)
+  is required for intentional re-engagement.
+- AI fleets at enemy colonies now use EngageAtPosition to re-engage
+  defenders, matching the arrival-only combat rule.
+
+Attack Targeting (UI)
+---------------------
+- Fix: Clicking Attack then clicking a colony with a fleet on top
+  now correctly targets the colony (prioritizes colonies over units).
+- Fix: Attack mode now checks diplomatic hostility — only hostile
+  entities are valid targets (prevents attacking allies).
+- New: Selection panel (right-side object list) supports attack mode.
+  Click a hostile entity in the list to issue attack commands directly.
+- Fix: Attacking an enemy group now works — resolves group to its
+  first unit as a stable pursuit target.
+
+Ghost Unit Cleanup
+------------------
+- Fix: 809+ ghost unit duplicates found in saves. After save/load,
+  WarpUnitToSystem used reference-equality Remove which silently
+  failed (different object instances with same ID). Changed to
+  ID-based lookup for removal.
+- Added DeduplicateSystemObjects at movement phase start to clean
+  up existing ghosts from old saves.
+- Fix: Presence indicators (galaxy map) now filter destroyed units
+  from system queries.
+
 [April 6 2026]
 
 Combat
