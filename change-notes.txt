@@ -1,6 +1,85 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 9 2026]
+
+Combat Strategies
+-----------------
+- New data-driven combat strategy system. Each ship blueprint can be
+  assigned a combat strategy that controls how it behaves in battle.
+- 14 strategies available: Optimal Firing Range, Evasive, Maximum
+  Weapons Range, Short Weapons Range, Point Blank, Board Enemy Ships,
+  Capture Planet, Carrier Operations, Kamikaze, Escort, Point-Defense
+  Screen, Attack Closest, Attack Strongest, Attack Weakest.
+- Strategies control movement (how close/far to engage), targeting
+  (what to shoot first), and overkill limits (when to switch targets).
+- Escort and Point-Defense Screen strategies let support ships stay
+  near your capital ships and prioritize shooting down incoming
+  missiles, seekers, and fighters.
+- Carrier Operations strategy launches fighters and stays at max range.
+- Strategies can be changed on existing blueprints without creating
+  a new design — just pick a new strategy from the dropdown.
+- Ship chassis can define a default strategy (carriers default to
+  Carrier Operations, colony ships default to Evasive).
+- Ground combat troops now also follow their blueprint's combat
+  strategy for movement and targeting.
+- Fully moddable — modders can create custom strategies in JSON.
+
+Ground Combat
+-------------
+- Militia now scales properly with population: larger colonies are
+  much harder to capture without bombardment. A 25B homeworld fields
+  over 1,500 militia in dozens of platoons.
+- Small colonies (10-100M population) are still capturable by a
+  modest troop force. Bombarding first is now essential for big worlds.
+- Militia squad size is configurable in game settings.
+- Ground troops now use combat strategies for movement and targeting
+  on the battle grid, making troop equipment choices more meaningful.
+
+Bombardment
+-----------
+- Destroyed colony facilities are now properly removed instead of
+  staying at 0 HP. Captured colonies no longer show ghost buildings.
+- Plague bombs only infect the directly targeted colony. Spreading
+  to other colonies happens naturally over multiple turns via the
+  plague timer — no more instant system-wide infection.
+- Plague spread degrades by 1 level per hop and uses a budget system.
+  A plague 5 hit spreads as 4, then 3, etc. Level 1 never spreads.
+
+Production & Deployment
+-----------------------
+- All unit types (ships, fighters, mines, satellites, drones, space
+  bases) now respect empire-wide deployment caps. Production pauses
+  at 1 turn remaining when the cap is reached and auto-resumes when
+  a slot opens.
+- Troops are now properly created as cargo items and go to colony
+  storage. They no longer appear as floating objects in the system.
+- Produced units always go to colony cargo or ship cargo — nothing
+  auto-deploys into the system from production. Deployment is always
+  an explicit player or AI action.
+- Surviving troops after capturing a colony go to the colony's cargo
+  storage so they can be reloaded onto transports for the next mission.
+
+AI Behavior
+-----------
+- AI empires now commit to conquest wars instead of cycling between
+  war and peace every 15 turns. Once a conquest war is declared, the
+  AI refuses peace until it captures territory or is desperate.
+- Base AI handler provides a default state machine that all races
+  inherit. If an empire is attacked, it fights back immediately
+  regardless of what phase it thinks it's in.
+- AI combat strategies are assigned based on ship role — warships
+  get Optimal Firing Range, supply tenders get Evasive, point defense
+  ships get PD Screen, carriers get Carrier Operations.
+
+Security
+--------
+- Script sandbox hardened for Steam review. Modding scripts cannot
+  access the file system, network, processes, clipboard, environment
+  variables, threading, or reflection. Unsafe code blocks are blocked.
+- Fixed a known vulnerability in a transitive dependency
+  (Tmds.DBus.Protocol).
+
 [April 7 2026]
 
 Diplomacy
