@@ -1,6 +1,50 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 10 2026]
+
+AI Ministry System
+------------------
+- New player-facing AI Ministry system. Players can enable AI ministers
+  to automate parts of empire management — research, production,
+  colonization, fleet command, diplomacy, and more.
+- Two-level control: enable/disable entire ministers at the empire
+  level, then opt individual colonies and ships in or out of AI
+  management via the "AI Ministry" checkbox on each entity.
+- New "Ministries" tab in the Empire Overview panel lists all available
+  ministers with checkboxes and descriptions.
+- "Enable All" master checkbox at the top toggles all ministers at once.
+- "Enable on All" button per minister enables ministry control on all
+  colonies and ships (entity-level opt-in).
+- Per-colony ministry toggle in the selection panel Details tab.
+- Ministry badge icon appears on colonies with AI management enabled.
+- Ministers that don't apply to individual entities (Research,
+  Diplomacy, Intelligence) show as simple toggles without the
+  "Enable on All" button.
+- Internal ministers (Prime Ministry, Fleet Needs Assessment) are
+  hidden from the player UI.
+- Player entities default to ministry disabled — opt-in only.
+
+Starting Blueprints
+-------------------
+- Starting ship, base, and weapon platform blueprints now have explicit
+  combat strategies assigned from their chassis defaults.
+- Kinetic corvettes use Optimal Range, missile corvettes use Max Range.
+- Colony ships and transports use their chassis default (Evasive and
+  Capture Planet respectively).
+- Capture Planet strategy now falls back to Evasive movement when no
+  colony is present, instead of Optimal Range.
+
+Surrender
+---------
+- Surrendering empire's completed research is now transferred to the
+  conquering empire. Only technologies (or higher levels) the
+  conqueror doesn't already have are granted.
+- All conquered colonies enter riot state (mood 0) on surrender.
+  Production and population growth halt until morale recovers.
+- Surrender notification messages updated to show technology count
+  and warn about rioting colonies.
+
 [April 9 2026]
 
 Combat Strategies
