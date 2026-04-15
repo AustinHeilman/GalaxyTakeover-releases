@@ -1,6 +1,38 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 14 2026]
+
+AI Diplomacy
+------------
+- AI empires can now read how other empires feel about them, not just
+  their own opinion of others.
+- AI empires can propose, accept, reject, and cancel treaties.
+- AI can declare war, offer peace, and break treaties through scripts.
+- New treaty permission queries let AI check relationship properties
+  (passage rights, trade, military access, coexistence, hostility)
+  without hardcoding treaty names.
+
+AI Situational Awareness
+------------------------
+- AI now tracks fleet composition breakdown (warships, colony ships,
+  transports, support).
+- AI can see empire scores and rankings matching the Comparisons screen.
+- AI knows the distance to the nearest enemy, helping gauge threat
+  urgency.
+
+Fleet Rally & Consolidation
+----------------------------
+- New Rally order type for ships returning to depots. Previously, rally
+  movement blocked ships from being merged into fleets.
+- Fleet consolidation now recognizes rallying ships and absorbs them
+  into groups immediately instead of ignoring them.
+
+Partnership Treaty
+------------------
+- Partnership (highest treaty tier) now allows coexistence — allied
+  empires can colonize within each other's territory.
+
 [April 10 2026]
 
 AI Ministry System
