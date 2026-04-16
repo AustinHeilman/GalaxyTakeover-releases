@@ -1,6 +1,70 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 15 2026]
+
+Damage-Over-Distance API
+-------------------------
+- New GetDamageOverDistance() API returns a cached int[] of deterministic
+  damage at each grid distance for any weapon. Supports flat falloff,
+  percentage falloff, fuel-based plasma decay, and explicit hand-tuned
+  arrays (weaponDamageAtRange capability).
+- Exposed via ICombatActionContext for combat scripts. Scripts can
+  invalidate cached curves mid-combat via InvalidateDamageOverDistance().
+- Fires combat.weapon.damageOverDistance event so mods can modify damage
+  curves dynamically (e.g., weapon overcharger components).
+- Ship engagement range calculation now includes plasma missiles in
+  its damage-vs-range optimization instead of ignoring all seekers.
+
+Plasma Missile Fixes
+--------------------
+- Plasma missiles no longer impact for 0 damage at max range. The fuel
+  decay formula now ensures a minimum charge on arrival.
+- Plasma missiles that fully exhaust their plasma fuel now vanish
+  (SeekerExpired) instead of impacting for 0 damage.
+
+Component Info Popup
+--------------------
+- Right-clicking a weapon in the ship designer now shows a horizontal
+  damage-over-distance grid (Range row + Dmg row, chunked into groups
+  of 10 for long-range weapons).
+- "Weapon Damage" removed from capabilities list (shown in grid instead).
+- "Weapon Range" renamed to "Max Range" in capability display.
+
+Weapon Balance
+--------------
+- Anti-Proton Beam I-XII: added hand-tuned damage-at-range arrays
+  with falloff per range square.
+- Phased-Polaron Beam I-V: added damage-at-range arrays with falloff.
+- Gravity Maul I-V: added steep -15/sq damage falloff.
+- Feedback Projector I-V: added steep -10/sq damage falloff.
+- Shield Disrupter I-V: added steep damage falloff.
+
+Package Reorganization
+----------------------
+- Moved shield-related weapons (shield depleter, massive shield depleter,
+  shield disrupter, shield buster, phased-polaron beam) and their
+  research definitions, icons, and assets from basegame-components to
+  basegame-shields package.
+
+Population & Cargo System Overhaul
+-----------------------------------
+- IStackable.Amount and Mass widened from int to long, supporting
+  populations that exceed 2 billion without truncation.
+- IUnit.Cargo, cargo capacity lookups, and all ViewModel display
+  properties (ShipCargoInfo, SystemObjectNode, CargoParticipant)
+  updated to long throughout.
+- Removed all legacy CustomProperties-based population code. Ship
+  passengers (IPopulation via ship.Passengers) are now the sole
+  population transport mechanism — no more CargoItem with cprops.
+- SystemViewModel ship cargo display now shows passengers per-race
+  with race portraits, replacing the old cprop-based population
+  display hack.
+- Removed GetPopulationFromCargo helpers and on-the-fly cprop
+  migration from ShipOrderService, ColonyService, and the tutorial
+  script. No save backward compatibility needed pre-launch.
+- RoboUnit harvester mod script updated for long cargo availability.
+
 [April 14 2026]
 
 AI Diplomacy
