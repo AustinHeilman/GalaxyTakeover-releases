@@ -1,6 +1,196 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 18 2026]
+
+Treaty Symmetry
+---------------
+- CancelTreaty and DeclareWar now route through DiplomacyService and
+  always write matching RelationshipState on both empires, ending the
+  class of bugs where one side saw peace while the other saw war.
+- Save loads reconcile any asymmetric relationship pairs left over
+  from older saves back to the default diplomatic state (with a
+  warning), so mid-campaign upgrades don't inherit a broken pair.
+- Mods that rename the default diplomacy state can pass a custom ID
+  through the new `Load(savePath, defaultDiplomacyStateId)` overload;
+  MainWindow and StartScreen auto-supply the active mod's default.
+
+Multi-Empire Battle Classification
+----------------------------------
+- Combat participants are now classified as Hostile / Allied /
+  Neutral per side, so an empire drawn into a battle through a
+  shared system no longer gets auto-escalated to war against
+  co-defenders. Auto-war is gated on prior bidirectional hostility.
+
+Threading & Stability
+---------------------
+- Fixed a concurrent-modification crash where the UI could snapshot
+  an empire's explored-systems set while the turn processor was
+  appending to it. The set is now a read-only facade with a
+  lock-free `MarkSystemExplored` mutation path (copy-on-write via
+  Interlocked.CompareExchange).
+- Modder note: `IEmpire.ExploredSystemIds` is now
+  `IReadOnlySet<Guid>`. Scripts that were adding to it directly
+  should call `empire.MarkSystemExplored(systemId)` instead — it
+  returns true on new insertion, so merge loops simplify.
+
+Stacked-Cargo Deployment Cap
+----------------------------
+- Stacked cargo (mines, fighters) deploying onto the grid now
+  respects the per-sector deployment cap. Overflow stays in cargo
+  instead of silently exceeding the limit.
+
+Colony & Production
+-------------------
+- Protected obsolete blueprints with pending builds from automatic
+  cleanup — no more "blueprint missing" mid-build stalls.
+- ColonizeCommand stays queued until colonization actually fires, so
+  ordered colonization survives intervening turn events.
+- Detected and redistributed over-allocated research branches that
+  were consuming more research points than intended.
+- Fixed computer component tech requirements so each research tier
+  unlocks exactly one computer, matching design intent.
+- AI skips building ships in idle navigation, freeing up yard
+  capacity for actively-needed designs.
+
+Combat & Cloaking
+-----------------
+- Cloaking no longer bypasses mines or mine-sweeping logic.
+- Territory demands and first-contact events now respect cloaking
+  instead of leaking cloaked fleet positions to non-detecting
+  empires.
+- Stationary defenders deploy in rings outside the colony perimeter
+  during combat (previously could spawn on top of colony tiles).
+
+UI
+--
+- Added yard, build, and needs-repair icon badges to the selection
+  panel.
+- Galaxy and system views now require Ctrl + mouse wheel to zoom
+  (plain scroll reserved for panning).
+
+[April 17 2026]
+
+GalaxyLocation Refactor
+-----------------------
+- Introduced `GalaxyLocation` (serialized `{SystemId, Position,
+  System ref}`) and `GridTransform` as the single source of truth
+  for where any solar-system object lives. Unit and DeployableUnit
+  deduped into a shared `UnitCore` base.
+- UnitCategory `IsShip` / `IsFighter` / etc. flags are now derived
+  from entity class interfaces instead of hand-maintained JSON
+  booleans, eliminating drift between the two.
+
+Diplomacy & AI
+--------------
+- Threatened empires now seek aid from potential allies and avoid
+  "suicide alliances" that would drag a weak partner into a
+  hopeless war.
+- Resupply orders re-evaluate their target each turn instead of
+  locking onto a stale destination.
+
+System Discovery
+----------------
+- Unified all system-discovery side effects on the `system.entered`
+  event. Mods that hook `system.entered` now see exploration
+  updates, fog-of-war updates, and first-contact checks fire in a
+  single consistent phase. Headless self-play harnesses wired to
+  match.
+
+Cargo & Deployables
+-------------------
+- Hid the Cargo button on units with no cargo capacity.
+- Fixed satellites that could remain stuck in the stockpile with
+  IsDeployed=true after combat ended.
+
+[April 16 2026]
+
+Weapon Target Restrictions
+---------------------------
+- Components now support a `targetRestrictions` JSON field that
+  declaratively limits what a weapon can fire at. Restrictions match
+  by unit category (e.g. `unit.fighter`), chassis ID (e.g.
+  `chassis.corvette`), or the special `colony` key for bombardment.
+  Include mode whitelists targets; Exclude mode blacklists them.
+- Base-game PD cannons are now restricted to small craft
+  (satellite/drone/fighter/corvette). This fixes the longstanding
+  issue where a ship with only PD weapons would contribute to
+  bombardment damage through the regular-weapon path — e.g. a
+  destroyer carrying boarding parties + PD would accidentally
+  bombard the colony it was trying to capture.
+- BombardmentPhaseHandler now filters both the "can this ship
+  bombard" gate and the per-weapon damage loop by the `colony`
+  target key, so weapons that opt out never contribute firepower.
+- See json-definitions.md → Components → Target Restrictions for
+  the full modder API.
+
+Production Service Refactor
+---------------------------
+- ProductionService rewritten around a unified
+  CreateEntityFromBlueprint factory and interface-driven placement:
+  ICargoItem → cargo hold, ISolarSystemObject → grid,
+  IColonyDefense → colony WeaponPlatforms. Replaces the per-type
+  builder tangle.
+- New HasCargoSpaceForItem pre-check runs before entity creation,
+  avoiding phantom entities that had to be destroyed if cargo was
+  full. Batch stacking merges subsequent cargo items with the same
+  blueprint into the first stack when Quantity>1.
+- AI colony ships auto-load population at production; new ships
+  with troop cargo auto-load troops.
+- Extracted shared helpers (TryConsumeResources,
+  IsBlockedByDeploymentCap) eliminate ~70 lines of duplicated
+  stall/pause logic between colony and spaceyard production paths.
+- "Production Held" / "Stalled" / "Paused" messages now route to
+  the colony owner only instead of broadcasting globally.
+
+Test Suite
+----------
+- EntityTypeRegistryBuilder.GetRegisteredTypes() now returns a
+  snapshot copy instead of the live ClassTypeMap dictionary,
+  eliminating a parallel-test race where GameContextFactory.Create
+  would throw "Collection was modified" when other tests mutated
+  the static map via AddScriptTypes/ClearScriptTypes.
+- Updated ComputeDominantPosture test to match the current Secure
+  → Offensive behavior introduced for post-conquest momentum (the
+  test was written for the older Secure→Develop mapping).
+
+AI Combat Adaptation
+--------------------
+- Buildup→Attack transition now gates on fleet strength ≥ estimated
+  target defense (scaled by past failures against that target). Empires
+  that can't yet break a defense abandon the target instead of throwing
+  fleets at it repeatedly.
+- New per-target FailedAttackCount inflates FleetMinister's defense
+  estimate after each failure, pushing the AI toward softer targets
+  before re-attempting a fortified one.
+- StrategySelector carries DefenseBalance and SeekerThreatRatio across
+  strategy-type changes (50/50 blend with a new baseline) so combat
+  adaptation survives strategy flips instead of being wiped each time.
+- Weapon family (beam/bolt/seeker) for threat routing now comes from
+  canonical component traits at snapshot time, not hardcoded
+  DefinitionId string lists. Fixes ripper-beam miscategorization and
+  routes all mod weapons that carry canonical traits.
+
+AI Troop Invasions
+------------------
+- Bombardment fleets now hold fire on depopulated colonies when the
+  group has no troops. Previously they kept firing until facilities
+  were destroyed, eliminating the colony as a conquest target before
+  troop carriers could arrive. Fleet still blockades the tile; combat
+  re-trigger is suppressed until troops are present.
+
+Planet Recovery After Bombardment
+---------------------------------
+- Colony.OnDestroy now clears the planet's ColonyId via IColonizable
+  (or a Parent.Objects fallback when Planet isn't hydrated), instead
+  of only handling the concrete Celestial class. Bombed-out planets
+  left dangling ColonyId pointers that permanently filtered them out
+  of FindColonizationTargets — they can now be recolonized.
+- AI colonization search also treats a non-null ColonyId as
+  colonizable if the referenced colony isn't in the galaxy index or
+  is flagged destroyed. Defensive safety net on top of the OnDestroy
+  fix.
+
 [April 15 2026]
 
 Damage-Over-Distance API
