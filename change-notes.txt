@@ -1,6 +1,123 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[April 21 2026]
+
+Session-Neutral Rename
+----------------------
+- Wholesale rename pass: `IMultiplayerSession` → `IGameSession`,
+  `MultiplayerGameHost` / `SubmitResult` / `HostMode` → session-
+  neutral names, `ViewModels.Multiplayer` namespace →
+  `ViewModels.GameSession`, and `[MP]` log prefixes dropped. With SP
+  and MP sharing one pipeline, the old "Multiplayer" labels only
+  confused readers.
+- Agnostic host seat picker + turn-submission fixes for the shared
+  host flow.
+- Scripts: `GalaxyTakeover.Models.Production` added to default
+  usings so mod scripts can reference production types without
+  extra imports.
+
+Multiplayer Test Harness
+------------------------
+- New determinism harness runs the same inputs through
+  `InProcGameServerTransport` and `HttpGameServerTransport` and
+  asserts byte-identical galaxy output. Proves the integrated
+  server produces the exact same state as the remote path.
+- Added suites for order dispatch, multi-empire turn resolution,
+  session persistence, and save round-tripping.
+
+Warnings
+--------
+- Build is back to zero warnings. Wired `TurnResultAvailable` and
+  removed dead hot-seat event plumbing.
+
+[April 20 2026]
+
+Integrated Single/Multiplayer Server
+------------------------------------
+- SP and MP now share one codebase. The authoritative game server
+  lives in a new `GalaxyTakeover.GameServer` library and is hosted
+  either in-proc (`InProcGameServerTransport`, default for SP) or
+  over HTTP (`HttpGameServerTransport`, for LAN / dedicated
+  hosting) behind a common `IGameServerTransport` interface.
+- The client never mutates the authoritative galaxy — it submits
+  orders through the transport, the server runs
+  `TurnResolver.ResolveAsync`, the client reloads state. The
+  legacy SP direct-mutation turn path has been deleted from the
+  session VM.
+- Integrated server is on by default and warms up during the
+  loading screen. SP/MP router added so the same entry points work
+  either way; dead `IsMultiplayer` / nullable-session branches
+  swept.
+- Every authoritative mutation now routes through an order
+  service: `IDiplomacyService`, `IResearchService`,
+  `IIntelligenceService` (with validator whitelist),
+  `IProductionService`, `IBlueprintDesigner`,
+  `ICargoTransferService` (population/passenger transfers), and
+  `IShipOrderService` (cloak toggle folded in). Cargo population
+  transfers gained DTO round-trip for server dispatch.
+- Services/Multiplayer moved to Services/GameSession;
+  `MultiplayerSession`/`MultiplayerSessionStore` →
+  `GameSession`/`GameSessionStore`; `MultiplayerCredentialStore` →
+  `GameServerCredentialStore`. Architecture summary captured in
+  `docs/design/integrated-server-plan.md`.
+
+LAN Hosting
+-----------
+- Server hosting extracted into a Razor Class Library so Avalonia
+  and the dedicated host share it. Mod state is shared between the
+  Avalonia client and the integrated server host so mods don't
+  double-load.
+- Open-to-LAN from the Avalonia client. New Game now supports Open
+  Seats with passwords and dedicated-server hosting.
+- Client session resume + per-turn server log fetch: reconnecting
+  clients pick up where they left off and pull the server's
+  message log for the turn they're actually viewing.
+
+Fixes
+-----
+- Bootstrap-synthesized save metadata now stamps both
+  `SaveFormatVersion` and `GameVersion`, so saves produced through
+  the new server path load cleanly.
+- Server-side messages are stamped with the turn the client
+  fetches (not the server's current turn), so the message log
+  doesn't look time-traveled after reload.
+- `TurnStartCompleted` now raised on turn start so the message log
+  auto-pops again.
+- Floating dock windows stay hidden until they're positioned (no
+  more flash in the wrong spot on open).
+- Stale movement-line overlays are cleared on turn reload.
+
+[April 19 2026]
+
+Multiplayer Turn Pipeline
+-------------------------
+- Server now advances the turn counter and dispatches TurnStart
+  after server-side resolution completes; client rebinds its
+  ViewModels in place on turn reload instead of swapping instances
+  (preserves subscriptions and selection state).
+- Server-authoritative empire merge + colony order application:
+  the client submits a `ColonyOrdersDto` built from its local
+  galaxy, the server merges into authoritative empire state.
+- QueueItem's string discriminator replaced with a `QueueTarget`
+  discriminated union carried directly on the wire, eliminating
+  string↔enum round-trips on every production dispatch. Services
+  tests updated for the new shape.
+- MP server now allows 1-empire sessions (used by the SP
+  integration tests), plus added turn-resolution diagnostics and
+  Serilog logging.
+- Ship orders, empire validation, session persistence, and the
+  host dashboard landed.
+
+Codebase Cleanup
+----------------
+- `GalaxyTakeover.UI.Common` renamed to
+  `GalaxyTakeover.AvaloniaUI.Common` — "Common" wasn't actually
+  shared with the Blazor UI, so the name now matches scope.
+- Server walks up from its bin directory to locate the sibling
+  `mods` folder, so both installed and dev layouts resolve mods
+  without extra config.
+
 [April 18 2026]
 
 Treaty Symmetry
