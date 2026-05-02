@@ -1,6 +1,363 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[May 2 2026]
+
+Fixes
+-----
+- Fixed celestial-category load on dedicated-server / self-play
+  starts so generated galaxies have proper planet, asteroid, and
+  star tagging from turn 1.
+
+[May 1 2026]
+
+Population Rides In Cargo Now
+-----------------------------
+- Population is now treated like any other cargo (drones,
+  fighters, troops, mines): it sits in a ship's cargo hold and
+  shows up with its own badge alongside the rest. Loading and
+  unloading population uses the same cargo-transfer path as
+  everything else, so transports work the way you'd expect.
+
+Combat Balance
+--------------
+- Bombardment weapons (plague bomb, napalm, irradiator, neutron
+  bomb, depot/logistics/shield busters) are now treated as
+  regular weapons that happen to target colonies. Big practical
+  effect: bombardment-only ships (e.g. plague-bomb carriers) no
+  longer get tagged as "weaponless" and run away — they actually
+  close on the colony and fire.
+- Bombardment busters can no longer hit ships, only the colony
+  facilities they were meant for.
+- Stalemate detection respects target restrictions, so a battle
+  with only PD-armed ships against capital targets ends the
+  fight instead of running indefinitely.
+
+Ship Design
+-----------
+- Corvette and Colony Ship hulls bumped from 5 to 6 max engines,
+  and the starting blueprints retuned so they hit their mass
+  budget exactly.
+
+Combat AI
+---------
+- Troop carriers now only act like transports if they actually
+  can't shoot. A boarder that also has weapons stays in the
+  fight instead of fleeing.
+
+UI
+--
+- Tooltips for cargo bays, drone bays, fighter bays, and mine
+  layers no longer show "Deploy Capacity: 0".
+- Build-queue checkboxes have tooltips explaining what they do.
+- Cargo-transfer dialog labels are clearer about source/target.
+- New fighter-cargo badge in the selection panel.
+- Dedicated-server dashboard now shows per-client connection
+  status.
+- Combat detail panel and replay viewer work correctly when
+  played on a dedicated server (previously 404'd or showed
+  empty).
+- Server window now has a proper icon. Optional ship packages
+  start disabled by default in the installer.
+
+[April 30 2026]
+
+UI
+--
+- Right-clicking → "Details" auto-switches the Selection panel
+  to the Details tab so you don't have to click again.
+- New custom dialog look that matches the rest of the UI.
+- Right-click context menus wired into all the main panels;
+  mods can hook them through Dev Tools.
+- Removed the developer-mode UI affordances (force-complete,
+  see-all-empires, debug overlays, etc.). They'll come back
+  later as an optional mod package.
+
+Turn Log
+--------
+- The turn message log is now embedded in the save, so it
+  survives game restart, multiplayer rollback, and reload —
+  no more empty log after loading.
+
+Research
+--------
+- Omniharvester now requires the resource extraction techs
+  (Mining/Farming/Refining) instead of Astrophysics, which is
+  a much more sensible prerequisite chain.
+
+[April 29 2026]
+
+New Game
+--------
+- Quick Start now randomizes galaxy shape AND warp-method,
+  giving you genuine variety on every "just hit play" run.
+
+System View
+-----------
+- Per-system starfield backdrops behind the grid — every star
+  system has its own backdrop now, the grid feels like it's
+  somewhere instead of floating in nothing.
+- "Center on Home System" actually centers (and resets zoom),
+  and viewport bounds are now respected so the camera can't
+  wander off the map.
+
+UI
+--
+- Selection panel and fleet panel show the same icon badges
+  the galaxy view does (yard, repair, build, drone, fighter,
+  fuel, etc.) — at-a-glance status without expanding the
+  details.
+- New fuel gauge with proper fuel icons.
+- Drone badge added.
+- Research panel: over-allocated branches no longer render
+  weirdly, and prepaid levels (carryover from prior turns)
+  are now visible.
+
+Combat & Movement
+-----------------
+- Fixed movement points being consumed wrong when leaving a
+  warp point.
+- Plague bomb now actually has a target and can be fired
+  (previously had no targetRestrictions and got skipped during
+  bombardment).
+- Plague bomb hitting a shielded colony now logs "blocked by
+  shields" instead of silently doing nothing.
+- All 13 spaceship hulls gained +1 max engine (subsequent
+  retunes adjusted the corvette/colony numbers further on
+  May 1).
+
+Ship Designer
+-------------
+- Component tooltips now show a "Targets" row listing what
+  the weapon can/can't shoot at.
+- "Vehicles" row renamed to "Mounts On" to match what it
+  actually means.
+
+Multiplayer
+-----------
+- Mobile spaceyard production queues now persist across turn
+  submission (previously emptied on submit).
+- Combat replay retention is per-empire and authenticated, so
+  replays don't leak across players on shared servers.
+
+[April 28 2026]
+
+Multiplayer
+-----------
+- Host can now roll the game back to a previous turn (server
+  retains the last 20 turn snapshots).
+- Each player gets their own post-submit save snapshot, so a
+  player's "what I just sent" is preserved independent of the
+  host.
+- Submitted orders persist across server restarts — a server
+  reboot mid-night no longer wipes everyone's turn.
+- Wait modal stays open through transient server hiccups
+  instead of bouncing you to an error screen.
+- Dashboard status per player: "Turn ready / Working on turn /
+  Turn submitted" so the host can see who's holding things up.
+- Join is now gated on client/server version match — no more
+  weird desyncs from joining a stale server.
+- Cancel-turn refuses if every empire has already submitted
+  (resolution is in flight at that point and cancelling would
+  corrupt state).
+- Foreign fleets now appear in your system view in MP — they
+  were invisible before due to a wire-format bug.
+- Empire-wide "Upgrade All" now also swaps obsolete designs
+  that are still queued in build, not just deployed ones.
+- Blueprints upgraded and saved keep a link to their
+  predecessor and successor, so design lineage is preserved.
+
+AI
+--
+- Invasion troop threshold scales with cargo capacity, so the
+  AI doesn't sit on twenty troops forever waiting for a number
+  that's too high to ever reach.
+
+[April 27 2026]
+
+New Game
+--------
+- New "Warp Method" picker on the New Game galaxy tab —
+  choose how warp lanes are generated. Galaxy preview shows
+  the lane layout before you start, and "Random" rerolls a
+  fresh layout each time you click Generate.
+- Warp-lane generators now enforce two hard rules across every
+  method: no warp lane crosses another, and no lane passes
+  through an unrelated star.
+
+Deploy/Retrieve
+---------------
+- Deploy and retrieve commands are now properly queued (so
+  they survive turn submission), and there's a per-blueprint
+  picker when a ship has multiple deployable types onboard.
+  Works correctly in multiplayer.
+
+AI
+--
+- "Stockpile-surge" behaviour: when AI empires accumulate full
+  reserves, they spend them down in a burst instead of just
+  sitting on a stockpile they're not using — same as a human
+  player would.
+
+Multiplayer
+-----------
+- Dedicated server: assorted production/first-contact/replay
+  defects fixed (script-built units like satellites and
+  weapon platforms were silently misrouting).
+- Rejoining no longer clobbers a pending submitted turn.
+
+[April 26 2026]
+
+New Game
+--------
+- The Home Planet Condition and Resources dropdowns on the
+  New Game empire tab actually apply to your homeworld now
+  (they were being ignored).
+
+Multiplayer
+-----------
+- Join Multiplayer remembers the last server URL and has a
+  Browse button for picking from saved servers.
+- Server now flags up mod-hash mismatches when an uploaded
+  save was made with a different mod version, instead of
+  loading silently and breaking later.
+- Retrofit, scrap, and analyze orders all go through the
+  same order pipeline as the rest, so they behave correctly
+  in MP (persist across turns, replay deterministically).
+- Component commands (right-click activate / queue) for
+  non-targeting components are queued server-side so they
+  fire at the right time, not just when the player happens
+  to be looking.
+
+Mods
+----
+- Galaxy-generation and game-start mod hooks now fire
+  correctly on the client preview path, not just on the
+  server. Custom maps and starting setups from mods preview
+  properly on the New Game screen.
+
+[April 25 2026]
+
+Multiplayer
+-----------
+- You can now cancel a turn submission to take your turn
+  back (as long as resolution hasn't started).
+- If you got disconnected, you can reclaim your seat by
+  re-entering the same name.
+- Galaxy map binds to your seat instead of the host's, so
+  what you see is what you control.
+
+Combat
+------
+- Storm obscurement no longer prevents same-tile combat.
+  Two ships in the same square fight even if a storm is
+  hiding the tile.
+
+Order Pipeline
+--------------
+- Clearing orders on a unit now also clears its destination
+  system, destination position, and engage-at-position
+  fields. Previously a stale destination could leak past a
+  new order.
+
+[April 24 2026]
+
+Combat
+------
+- "SOL" stellar nova and similar planet-destroying component
+  abilities now actually fire in MP (they were routing
+  through a client-only path that the server ignored).
+- A planet destroyed by SOL now produces an asteroid that
+  carries the planet's resource values, so you can still
+  mine the remains.
+- AI satellite + mine design/queue pipeline fixed: the AI
+  was failing to design or queue these and going without.
+
+UI
+--
+- 1-second debounce on the End Turn button after a turn
+  resolves, to keep accidental double-clicks from skipping
+  through.
+- Training facility tooltips clarify they apply to "ships
+  built at this colony" (not all ships everywhere).
+
+Research
+--------
+- Unit Combat Effectiveness moved to the Theoretical Science
+  group, where it fits much better.
+
+[April 23 2026]
+
+Research
+--------
+- Anti-cloak split off into its own tech instead of riding
+  along with general sensor research.
+- Sensor and scanner families now have parent-branch gates
+  (you research the family before the variants), so the
+  tree progression makes more sense.
+- ECM research entry uses the ECM component icon.
+
+Component Balance
+-----------------
+- Atmosphere Resequencer rebalanced across tiers, with
+  difficulty scaling by planet size (bigger planets are
+  harder to terraform).
+- Habitat Optimizer rebalanced across tiers with the same
+  size-based difficulty.
+- Minesweepers: mass cut to 20 (from 60), sweep rate
+  doubled per tier — they're worth fitting now.
+
+UI / Multiplayer
+----------------
+- Galaxy map preserves your selected system across the
+  turn-end rebind (selection is no longer lost when the
+  next turn comes in).
+- First-contact event notifies BOTH empires now (previously
+  only one side saw it).
+- Message log no longer flashes empty for a frame on
+  turn-start auto-open.
+- Retrofit orders persist across turns in MP.
+- Production queue order on the server matches the order
+  you submitted from the client (was being reshuffled).
+
+[April 22 2026]
+
+Galaxy Generation
+-----------------
+- Four new "flavor" dropdowns on the New Game galaxy tab,
+  independent of shape and size:
+  * Galaxy Age — affects black hole / ancient ruin / storm
+    frequency.
+  * System Density — how many planets per system, and how
+    common ruins/storms/monster encounters are.
+  * Warp Point Density — how connected the galaxy is.
+  * Habitability — how lush vs. how harsh planets tend to
+    be on average.
+  Mix these axes for a different feel without picking a
+  different shape.
+- Warp lanes use a proper Gabriel-graph topology now —
+  natural neighbors only, no crossings, always connected.
+  Density is now the chance that each natural-neighbor pair
+  gets a lane: sparse galaxies look MST-like, dense ones
+  fill in the full graph. No more hard 1-to-4 caps and
+  awkward fallbacks.
+- Renamed the "ancient system" weight (was called "black
+  hole weight" internally) — the name now matches what it
+  actually controls.
+
+Ship Designer
+-------------
+- Marking a blueprint obsolete now sticks for designs that
+  have already been built (previously the toggle silently
+  reverted on save reload).
+
+UI
+--
+- Empire portraits have transparent backgrounds now, so
+  they blend into the panel instead of sitting on a square.
+- Empire icon, dedicated-server save flow, and SVG sizing
+  cleanups across the UI.
+
 [April 21 2026]
 
 Session-Neutral Rename
