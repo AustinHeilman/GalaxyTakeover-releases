@@ -1,13 +1,46 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[May 3 2026]
+
+Fixes
+-----
+- AI "deploy mines/satellites/drones/fighters" orders now actually
+  fire when the ship arrives at its destination with cargo loaded.
+  Previously the activation event had no listener on the server
+  side and the order died silently after the move completed.
+
 [May 2 2026]
+
+Audio
+-----
+- First sound effect in the game: a ping when the new turn is
+  ready. Plays in single-player, multiplayer (host and remote),
+  and when connected to a dedicated server. Audio is wired through
+  a new IAudioService so it can be swapped out for a richer engine
+  later.
+
+UI
+--
+- Prev/next colony toolbar buttons now also rebind the build queue
+  panel, so cycling colonies updates production in place instead
+  of leaving you on the previous colony's queue. Mobile spaceyard
+  panels and pinned enemy-intel panels stay put.
+- Comparisons chart now sizes correctly the first time it's opened
+  and after switching tabs — the top axis label and per-bar value
+  labels have proper margins instead of clipping at the canvas
+  edge.
+- Comparisons dialog opened from the Diplomacy panel now shows
+  empire flags alongside the data.
 
 Fixes
 -----
 - Fixed celestial-category load on dedicated-server / self-play
   starts so generated galaxies have proper planet, asteroid, and
   star tagging from turn 1.
+- Empires loaded from a save (or created mid-game by AI emergence)
+  now consistently resolve their flag and portrait paths from the
+  mod definitions, so race art doesn't go missing after reload.
 
 [May 1 2026]
 
