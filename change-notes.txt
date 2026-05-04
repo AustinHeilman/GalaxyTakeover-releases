@@ -3,12 +3,51 @@ GalaxyTakeover - Change Notes
 
 [May 3 2026]
 
+Random Events
+-------------
+- 24 random events across 10 base-game packages now fire during
+  the turn cycle. Examples: meteor strikes against cargo or
+  facilities, cosmic and ion storms, planet-core instability,
+  star plasma flares, warp-point collapses, plague outbreaks,
+  resource discoveries, science bonuses and tech breakthroughs,
+  population booms, ship veterans, construction speedups, tax
+  bonuses, fuel leaks, space rust, spatial anomalies, earthquakes.
+  Strict cap of 1 event per turn for the whole game so the log
+  doesn't get spammed; firing rates are weighted by severity, and
+  catastrophic-tier events are gated until turn 100 so a fresh
+  empire can't lose its homeworld to a planet-core meltdown on
+  turn 3. Two galaxy-level knobs (EventFrequency and
+  MaxEventSeverity) are written at game start so the per-package
+  handlers can scale themselves down or off later.
+
+Ancient Ruins
+-------------
+- Some planets and moons (~15% each) now generate with ancient
+  ruins, surfaced by a new badge in the system selection panel
+  visible to anyone scanning the system. Ruins are pre-rolled at
+  galaxy generation: 80% carry a research-point grant
+  (20k–100k RP, applied to a random unlocked area on
+  colonization with a guaranteed +1 tier and any leftover as
+  partial progress on the next tier), 20% reveal a previously
+  hidden Precursor research category (Massive Shield Depleter,
+  Massive Engine Destroyer, or Massive Planetary Shielding) so
+  the empire can begin researching it normally. The reward is
+  consumed and the badge disappears the moment the colony is
+  founded; if the colonizing empire already knows the revealed
+  tech the ruin fizzles. Lives in its own basegame-ancientruins
+  package so it can be disabled or modded without touching
+  generation.
+
 Fixes
 -----
 - AI "deploy mines/satellites/drones/fighters" orders now actually
   fire when the ship arrives at its destination with cargo loaded.
   Previously the activation event had no listener on the server
   side and the order died silently after the move completed.
+- New Game's research-cost selector now actually drives research
+  costs. The setting was being written to a galaxy custom property
+  but never read by the cost calculator, so picking "expensive" or
+  "cheap" had no effect. Cost multiplier is now applied for real.
 
 [May 2 2026]
 
