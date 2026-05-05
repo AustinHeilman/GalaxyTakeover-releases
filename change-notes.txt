@@ -1,6 +1,26 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[May 4 2026]
+
+UI Navigation
+-------------
+- Prev/Next cycling through colonies, idle ships, and idle fleets
+  now centers the galaxy view on the selected unit's solar system,
+  not just selecting it. The galaxy map pans to follow your
+  selection so you can see where the unit lives without manually
+  scrolling.
+
+First Contact
+-------------
+- First Contact messages now name the solar system where the
+  encounter happened ("...in the Sol system!") and the Goto button
+  on the message centers the galaxy view on that system. Previously
+  the C# discovery path that fires when ships move into a foreign
+  system mentioned only the empire, with no system context and no
+  goto target. The diplomacy.first_contact script event is now
+  guaranteed to carry a non-null `system` payload.
+
 [May 3 2026]
 
 Random Events
