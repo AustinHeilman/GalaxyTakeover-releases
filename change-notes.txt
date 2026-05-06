@@ -1,6 +1,27 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[May 6 2026]
+
+Colony Scramble
+---------------
+- Colonies with fighters or drones in cargo now auto-scramble
+  them onto the combat grid every round during defense, with no
+  facility prerequisite. Default rates: 60 fighters/round, 1
+  drone/round, configurable per-package via game-settings.json
+  (`combat.colonyFighterLaunchPerRound`,
+  `combat.colonyDroneLaunchPerRound`).
+- The "Planetary Fighter Bay I/II/III" colony facility has been
+  removed. Stockpile cargo space comes from generic warehouse
+  facilities; the fighter scramble is now intrinsic. Carrier-mounted
+  Fighter Bay I/II/III ship components are unchanged.
+- Scrambled stacks fan out around the colony's combat-radius
+  perimeter via the shared ring allocator, so each successive
+  scramble lands on a fresh tile instead of stacking on one.
+- Combat log type renamed FighterDeployed → LaunchableDeployed;
+  ICombatActionContext methods renamed Fighter* → Launchable* to
+  reflect that they operate on any IDeployableUnit, not only fighters.
+
 [May 4 2026]
 
 UI Navigation
