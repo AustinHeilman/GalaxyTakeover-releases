@@ -1,6 +1,25 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[May 23 2026]
+
+Screenshot Hotkey (developer builds only)
+-----------------------------------------
+- Press F12 anywhere in the main game window to save a 1920x1080
+  PNG to %USERPROFILE%\Pictures\GalaxyTakeover\. Captures the
+  Avalonia visual tree directly, so OS chrome, title bars, and
+  overlapping windows are excluded. Letterboxes when the window
+  isn't 16:9 so output always matches Steam's screenshot spec.
+- Excluded from DEMO and STEAM builds so it doesn't collide with
+  Steam's own F12 overlay-capture for shipping players.
+
+Build Configurations
+--------------------
+- Added a `Steam` build configuration alongside Debug/Release/Demo.
+  Defines the STEAM compile constant, mirrors Demo's Release-like
+  optimisation settings. Use `#if !STEAM` to strip developer-only
+  tooling from the paid Steam build.
+
 [May 6 2026]
 
 Colony Scramble
