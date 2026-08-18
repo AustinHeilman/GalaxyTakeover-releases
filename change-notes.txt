@@ -3,6 +3,59 @@ GalaxyTakeover - Change Notes
 
 [Aug 17 2026]
 
+O.P.E.N. Warp Point Opener
+---------------------------
+- Range for all five O.P.E.N. tiers is now a straight-line distance in
+  light years, measured directly against each system's galaxy position,
+  instead of a warp-hop count through the existing connection network.
+  A ship can now crack open a warp point to any unconnected system within
+  physical range, regardless of how (or whether) the existing warp network
+  happens to route there. Tier ranges: I 150ly, II 400ly, III 800ly,
+  IV 1500ly, V 2500ly.
+- The target-system picker now shows every system's actual distance in
+  light years (not just reachable ones), and its range circle is drawn
+  to true scale, so out-of-range systems are no longer shown as
+  "Distance: unknown".
+- Fixed a bug where command-defined "custom" properties (picker titles,
+  descriptions, range mode, etc.) read from mod JSON were silently
+  ignored — they were left as JsonElement instead of native types, so
+  every is-string/is-int check against them quietly failed and fell
+  back to defaults.
+
+Intelligence Panel
+-------------------
+- Offensive intel projects now repeat by default: completing one re-arms
+  the same allocation against the same target instead of clearing it,
+  matching how research allocations behave. Previously every offensive
+  operation's allocation was removed the instant it completed, forcing the
+  player to reselect and reallocate by hand each time — for cheap/fast
+  projects (allocation vastly exceeding cost) this could complete in a
+  single turn and looked like the allocation was "resetting to 0" every
+  turn. Right-click a project and check "Stop After Completion" for the
+  old one-shot behavior instead.
+- Fixed a related bug where leaving the Intelligence panel open across a
+  turn boundary (MP or SP turn-advance) left it bound to the discarded
+  pre-turn empire snapshot. Any allocation set on a stale panel silently
+  never reached order submission. The panel now rebinds to the live empire
+  and galaxy on every turn change, the same way the Research and Blueprints
+  panels already did.
+- Fixed ship-sabotage intel report messages (Crew Insurrection, Ship Bomb,
+  Cargo Bomb, Fuel Leak, Engine Damage, Crew Rotation, Order Snafu) showing
+  the literal text "{ship}" and "({design})" instead of the actual ship
+  name and design — the message formatter never substituted those two
+  placeholders even though every ship-sabotage project's text uses them.
+- Crew Insurrection (and any future ship-capture effect) now pulls the
+  captured ship out of its fleet before transferring ownership, instead of
+  leaving it listed in the victim's fleet under a new owner.
+- Fixed "Total Percentage Allocated" only counting projects against
+  whichever target empire happened to be selected, instead of every
+  target combined. Switching targets let the player spend up to 100%
+  again against the new target without any warning that a previous
+  target's allocation was still live, so total commitment across all
+  targets could silently run well past 100% of actual intel output.
+  The total (and Clear All) now correctly cover every target at once,
+  matching how research allocation has always worked.
+
 Light Armor
 -----------
 - New armor component family (Light Armor I-VI) alongside the
