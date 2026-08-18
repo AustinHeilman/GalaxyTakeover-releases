@@ -1,6 +1,31 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[Aug 17 2026]
+
+Light Armor
+-----------
+- New armor component family (Light Armor I-VI) alongside the
+  existing standard armor tiers, unlocked by the same research.armor
+  levels. Each piece is 5kt (half of standard armor's 10kt) for 40%
+  of the matching standard tier's hit points, letting ships fill
+  small leftover mass slots that a full standard plate wouldn't fit
+  into.
+- AI ship design: the race design-recipe armor density fill
+  (armorMassPerOne) now tops off with the best smaller armor
+  component when its density target wants more armor but a full
+  plate no longer fits the chassis, instead of leaving that mass
+  slot unarmored.
+
+Blueprints Panel
+----------------
+- Fixed a crash ("Cannot show a window with a closed owner") when
+  clicking Create on the Blueprints panel after closing and
+  reopening it. The panel's view was being recreated each time the
+  floating window opened, but its event handlers were never
+  unsubscribed from the shared view model, so stale handlers from
+  earlier, already-closed windows kept firing alongside the live one.
+
 [May 23 2026]
 
 Screenshot Hotkey (developer builds only)
