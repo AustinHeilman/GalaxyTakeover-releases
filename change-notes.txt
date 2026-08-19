@@ -1,6 +1,100 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[Aug 18 2026]
+
+Deployed Cargo Stacking
+-----------------------
+- Fixed a bug where deploying satellites, mines, or other stationary
+  cargo to a colony always created a brand-new grid object instead of
+  merging into a matching stack already at that position. Root cause:
+  the headless game context used by the merge-into-existing-stack
+  lookup was never wired up after session start, so the merge check
+  silently no-oped on every deploy and always fell back to spawning a
+  new object. Affected the player UI, mods, and any deploy driven
+  through the order service.
+- The AI/script deploy path (used directly by AI satellite and mine
+  placement) had the same gap independently — it never attempted to
+  merge into an existing stack at all. Brought to parity with the
+  player-facing path, so repeated AI deploys at the same colony tile
+  now accumulate into one stack instead of piling up separate objects
+  turn after turn.
+
+Colony-Rich Neutral Empires
+---------------------------
+- Fixed system-view lag in systems with many identical ship icons
+  (e.g. large neutral trader fleets): icons were re-parsing the same
+  SVG from disk for every instance with no cache. SVG sources are now
+  cached by resolved path and cloned instead of re-read.
+- Fixed satellite-layer (and mine-layer/mine-sweeper/repair/medical/
+  resupply ship) overproduction at colony-rich neutral empires like
+  the Free Trader Consortium: the production minister's fleet-
+  composition counter never bucketed these roles, so the posture-plan
+  deficit calculation always read their count as 0 and kept queuing
+  more of them indefinitely at every colony.
+
+Quantum Reactor
+---------------
+- Mass increased from 20kt to 40kt across all three tiers.
+
+Troop Designs
+-------------
+- Troop designs now require exactly one Troop Cockpit component,
+  matching how fighter chassis already require their cockpit.
+
+Intelligence Panel
+------------------
+- The selected target empire is now highlighted with the same
+  lime-green highlight used in the Objects list, so it's clear which
+  empire your operations are aimed at.
+- Removed the "Extensive/Moderate/Limited" intel-level readout, which
+  had no mechanical effect anywhere in the game and was more
+  confusing than informative on its own.
+
+Selection Panel
+---------------
+- Double-clicking an object in the selection list now opens its
+  Details tab directly, matching the existing right-click "Details"
+  action.
+
+Production Queue
+-----------------
+- Fixed the colony production-queue tooltip showing the raw
+  definition ID (e.g. "facility.radioactives.1") instead of the
+  facility or unit's display name.
+
+Component Popup
+---------------
+- Weapons with no target restrictions now show "Anything" in the
+  Targets row of the component popup instead of hiding the row
+  entirely.
+
+Random Events
+-------------
+- Space Rust and Tax Bonus event messages now name which resource
+  (minerals, organics, or radioactives) was affected.
+
+Plague Sabotage
+---------------
+- Added three new offensive intelligence operations — Engineered
+  Outbreak, Weaponized Contagion, and Pandemic Strike (20k/40k/60k
+  intel points) — that covertly infect an enemy colony with plague,
+  bypassing combat and shields entirely. Each tier requires both
+  Applied Intelligence and Biological Weapons research at matching
+  levels 1-3, and is capped below the plague bomb weapon's tier-5
+  ceiling since the covert route skips the fight needed to deliver a
+  bomb.
+
+Ship Design Validation
+----------------------
+- Fixed a bug that let troop-only weapons (e.g. Ground Cannon) end up
+  mounted on ship-category chassis. The AI's template-based design
+  path was pulling substitute components from an unfiltered pool
+  whenever a templated weapon wasn't researched yet, and design
+  validation never checked a component's allowed-unit-type
+  restriction at all. Both gaps are closed; existing designs built
+  before this fix are unaffected.
+
 [Aug 17 2026]
 
 O.P.E.N. Warp Point Opener
