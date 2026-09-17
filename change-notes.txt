@@ -1,6 +1,20 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[Sep 16 2026]
+
+Floating Panels
+----------------
+- Research, Blueprints, Intelligence, Diplomacy, Message Log, Combat
+  Replay, Empire Overview, Construction Queue, Ship Design, Cargo
+  Transfer, and Deploy Selection panels are real docking windows
+  again instead of plain pop-up windows — you can drag one back into
+  the main window, tab it alongside another panel, or pin it, same
+  as any other dock panel. They'd been switched to plain windows in
+  August to dodge a crash/blank-panel bug that could fire when
+  right-clicking inside one of them; that bug is now fixed upstream,
+  so full docking behavior is back.
+
 [Aug 18 2026]
 
 Deployed Cargo Stacking
