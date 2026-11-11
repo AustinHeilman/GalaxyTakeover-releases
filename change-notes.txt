@@ -1,6 +1,391 @@
 GalaxyTakeover - Change Notes
 ==============================
 
+[Nov 9 2026]
+
+Weapons
+-------
+- Annihilator Beams hit harder and reach further: damage 320 / 400 /
+  480 and range 9 / 10 / 11 for ranks I-III (was 200 / 280 / 400, all
+  range 8). Annihilator III used to do less damage over time than Pyre
+  III for the space it took, and ranks I and II were a step down from
+  Pyre III. On a Massive base mount, Annihilator III now hits for 3,360
+  at range 15.
+
+Space Bases
+-----------
+- Mine layers can be fitted to space bases. A base can't move, so it
+  only drops mines on its own square; choosing another square gives a
+  message instead of an order that never happens.
+- A Space Yard keeps what it builds in its own cargo hold and fighter
+  bays. A base on its own used to hold every fighter it built with "no
+  nearby colony or ship has cargo space". New units go to a colony on
+  the same square first, then the yard's own hold, then another of your
+  ships on that square.
+
+Events
+------
+- When the Spatial Anomaly event moves a ship to another system, your
+  empire now explores that system, the same as warping in. The ship
+  leaves its fleet and its old orders are cleared.
+
+Dev Tools
+---------
+- Complete Next Turn now works on items in a Space Yard's queue, not
+  just a colony's.
+
+Modding
+-------
+- ctx.Movement.MoveUnitToSystem and MoveFleetToSystem fire the same
+  system.leaving / left / entering / entered events as a warp, so the
+  owner explores the destination and first contact is checked.
+
+[Nov 8 2026]
+
+Combat Reports
+--------------
+- Every colony in a battle is listed, damaged or not. A side defended
+  only by colonies used to vanish from its own report when they came
+  through unharmed. Unharmed colonies are marked "No damage".
+- Each colony appears once: ground combat and captures are shown on the
+  colony's card instead of in separate boxes.
+- The result header is green for Victory, orange for Stalemate and red
+  for Defeat. The empty Enemy Forces strip is hidden.
+
+Fleets
+------
+- Removing a ship from a fleet now sticks. The ship used to rejoin the
+  fleet when you ended the turn.
+
+Space Yards
+-----------
+- Scrap, Analyze and Retrofit in a Space Yard ship's Build Queue menu
+  act on the ships docked at it. Retrofit used to offer designs for the
+  Space Yard ship itself.
+
+Satellites
+----------
+- The Large satellite mount only fits Large satellites.
+- Satellites have more space: Medium 100 -> 110 kT, Large 120 -> 150 kT.
+
+Logging
+-------
+- Logs continue in a new numbered file after 50 MB instead of stopping.
+
+[Nov 7 2026]
+
+Weapons
+-------
+- Weapons can now get stronger or weaker with distance, and won't fire
+  at targets inside their minimum range. The weapon info popup shows
+  damage and hit chance by distance.
+- Defensive mounts reach further: space base mounts add +1 / +2 / +3 /
+  +4 range (Standard also +10 accuracy), weapon platform mounts +1 / +3
+  / +5. Satellites get a new Medium mount (+1 range, 1.5x damage) and
+  the Large satellite mount adds +3 range.
+- A weapon with no mount uses its hull's Standard mount, so older base
+  and platform designs get the extra range too. The Mount Size list
+  shows a single Standard choice.
+
+Ground Combat
+-------------
+- New Troop Artillery I-III: 8 / 12 / 16 damage at range 2-5. Troop
+  stacks made only of artillery step back from adjacent enemies.
+
+Mines
+-----
+- Mine warheads come in Small (100 damage), Medium (200) and Large
+  (300), each with ranks I-III. Higher ranks cost less for the damage,
+  so Large III is the best value. Explosive Warheads research goes to
+  level 9 to unlock them.
+- The AI picks the warhead size that puts the most damage into a
+  minefield for what it can afford.
+- Warheads are named after what carries them: Small/Medium/Large Mine
+  Warhead, Anti-Ship and Anti-Planet Drone Warhead, Kamikaze Fighter
+  Warhead.
+
+Ship Designs
+------------
+- Design stats are more accurate: stealth armor evasion and supply from
+  the hull were counted wrong in places, and accuracy and evasion
+  bonuses now round instead of rounding down.
+
+Fleets
+------
+- A fleet slows down when one of its ships loses speed (for example
+  when its engines are destroyed). A fleet could show 6 / 1 and still
+  move 6.
+- Damaged ships in the fleet list show a repair icon with a tooltip
+  listing hull and component damage, and a line such as "4 parts
+  destroyed, 4 damaged - slowing fleet (speed 1)".
+
+Diplomacy
+---------
+- The AI no longer proposes alliances to, or against, empires that have
+  been eliminated.
+- An AI won't declare war on, or cancel a treaty with, a partner at
+  Trade & Research or above unless its opinion of that partner has
+  fallen to -25. Trust builds twice as fast in those treaties, and
+  close treaty partners resent each other's growth less.
+- Races can give their own coalition warnings; the Kol'lekt now do.
+
+Races
+-----
+- Kohlareen homeworlds are ice planets.
+- Unused race growth and planet modifiers are removed. They only
+  showed on the Diplomacy screen.
+
+Modding
+-------
+- Weapons define damage by endpoints: weaponDamage at weaponMinRange to
+  weaponDamageAtMaxRange at weaponRange. weaponFalloff,
+  weaponFalloffPercent and weaponDamageAtRange are removed.
+- New weapon.damageCurve and weapon.accuracyCurve hooks replace
+  combat.weapon.damageOverDistance. IBlueprintDesigner.GetWeaponCurves
+  and ResolveMount give scripts the same numbers combat uses.
+- Scripts can add design stat rows through ui.blueprint.stats.requested.
+- Race classes can override Population.GetDiplomaticLine to give their
+  own diplomatic lines.
+- Scripts get GalaxyTakeover.Core.Capabilities in their default usings.
+
+[Nov 6 2026]
+
+Coalitions
+----------
+- AI empires form a Coalition against an empire that has pulled too far
+  ahead. Members stop fighting each other and turn on the leader until
+  its standing falls.
+- An empire can no longer surrender to two empires in the same turn.
+
+Unit Maintenance
+----------------
+- Unit maintenance is now charged. It was shown in the budget but never
+  taken. Every empire pays at the start of the turn; anything the
+  stockpile can't cover comes out of that turn's income, so an empire
+  that runs short stalls its build queues.
+- Upkeep is 5% of a unit's build cost, and each unit in a stack pays.
+- Spaceports are now called logistics hubs. They cost 300 each of
+  minerals, organics and radioactives. Old saves are updated on load.
+
+AI Economy
+----------
+- The AI watches the resources maintenance drains, builds missing
+  logistics hubs, swaps mines for refineries when minerals are at the
+  cap, and stops adding units when upkeep takes all its income.
+- AI build queues skip items they can't pay for instead of stalling.
+- Neutral factions load their race data, retrofit obsolete ships before
+  scrapping them, and design warships on their largest hull.
+
+Combat
+------
+- Colony damage goes to shields first, then weapon platforms, then
+  facilities, then population.
+- A weapon that fires at a ship can't also bombard that round, and its
+  reload starts whether the shot hits or misses.
+- Ships at maximum or optimal range back away from the nearest armed
+  enemy, and pick a new target when theirs is out of reach.
+- Mines and satellites stay out of combat grids, reports and replays.
+  Only fighters and drones count as a carrier's cargo.
+- Cargo is destroyed with the unit carrying it, however it dies.
+- High Energy Discharge weapons are rebalanced, and the branch now needs
+  Propulsion 4. APB, meson and polaron weapons cost even minerals and
+  radioactives.
+
+Interface
+---------
+- Mine stacks no longer show their count twice ("x16 x16").
+- Colony mine messages go to the Colonies tab and have a Goto button,
+  as do black hole messages.
+
+Modding
+-------
+- New component.chassis.destroyed event; component.destroyed now also
+  fires for mines, storms and combat, so a component can react (for
+  example by launching its cargo) before the ship is removed.
+- Chassis scripts can decide whether a ship can be retrofitted.
+- Facility and setting IDs renamed: facility.logisticshub and
+  enableLogisticsHub.
+
+[Nov 5 2026]
+
+AI Warships
+-----------
+- AI warship designs no longer fail on most hulls. Designs were being
+  overfilled or built on carrier hulls, so empires kept building old
+  ships however far their research had come.
+- The AI researches armor from turn 30 and fits it to its warships.
+- Empires keep their warships on their best preferred weapons, so
+  they fight with different weapons, on the biggest mounts that fit.
+
+Mine Sweepers
+-------------
+- Mine sweepers no longer reveal cloaked mines. They clear mines when
+  they enter a grid space, whether or not you can see them.
+
+Combat
+------
+- A destroyed colony is now really gone. Ships used to keep bombarding
+  it for the rest of the battle.
+
+Interface
+---------
+- Weapon platforms of the same design stack in the Transfer Cargo
+  window.
+- Components above tier X now show their tier badge.
+
+Tutorial
+--------
+- The tutorial is turned off for now.
+
+Fleets and Orders
+-----------------
+- A fleet created this turn takes orders straight away.
+- Commands go to every selected ship, not just the first.
+- The failed colonization message has a Goto button.
+
+AI Pressure
+-----------
+- AI empires get fleets earlier: yards come sooner, warships come
+  before colony ships from turn 15 when an empire is behind, and small
+  groups attack targets they clearly outmatch.
+- The AI adds shipyards when it has more ships queued than its yards
+  can build, and colonies extract radioactives when minerals are
+  plentiful.
+
+[Nov 4 2026]
+
+Warp Point Labels
+-----------------
+- Warp points now show the name of the system they lead to, in a small
+  label under the icon.
+- Until your empire has explored that system, the label, the warp
+  point's name, and any warp orders all say "Unknown" instead of
+  giving away the destination. Explored systems show their name on
+  every warp point that leads to them, even one you've never used.
+
+Do Not Enter Spaces
+-------------------
+- Right-click a grid position in the system view and choose Do Not
+  Enter to mark it, or Remove Do Not Enter to clear it. Marked spaces
+  have a dotted orange box that only your empire can see.
+- Ship routes never cross a marked space. If there's a way around,
+  your ships take it, however long. If there isn't, the ship stops one
+  space before, its orders are cleared, and a Route Blocked message
+  says where it stopped.
+- Sending a ship directly to a marked space still works, as does
+  choosing a marked warp point, landing on a marked space after a
+  warp, or attacking a target on or past one.
+- Multi-system routes don't look for another path around a marked warp
+  point: the ship stops there, even if another warp route exists.
+
+Mines
+-----
+- Hitting a minefield now marks that space Do Not Enter automatically
+  with a "Suspected minefield" mark.
+- The mark clears itself when a ship survives there and no enemy mines
+  remain, whether a sweeper cleared them or a ship outlasted them. If
+  every ship was destroyed, the mark stays, because your empire can't
+  know whether the last mine went too.
+- Goto on mine messages in the Turn Log now opens the system and grid
+  position where it happened.
+- Mine Sweeping is now its own 5-level tech under Sensors & Recon, so
+  you no longer need to research mines to clear them. Like mines, it
+  requires Small Unit Construction.
+- Fixed mines being visible to other empires: units built in
+  production never received their chassis concealment. Existing saves
+  are repaired on load.
+- Mines now detonate just after a ship enters their space.
+- The design screen now counts mine results. The mine that lands the
+  killing hit gets the kill and tonnage, the ship counts as lost on
+  its own blueprint, and swept or detonated mines count as lost on
+  theirs.
+
+Deployment Limits
+-----------------
+- Mines and satellites each now use the same limits: 200 units and 5
+  designs per grid space, and 500 stacks per empire. Modders can set
+  these per unit category with deploymentLimits.
+- All deployment now follows the same rules. Previously the AI's
+  scripted deployment skipped the caps, and it stacked every mine on
+  the first border warp point.
+- Fixed split fighter, mine, and satellite stacks losing their special
+  behavior.
+
+AI Mines and Sweeping
+---------------------
+- AI mines were empty designs that did no damage. The AI now fits its
+  largest mine chassis with its most damaging allowed warhead, and
+  retires the old design when a better one is available.
+- Fixed the AI overbuilding mines. It now counts what's deployed,
+  stored, and queued against its goal.
+- The AI now starts on mines around turn 45.
+- Once mines start destroying its ships, the AI researches Mine
+  Sweeping, adds sweepers to new warships, and builds dedicated
+  sweepers on corvette to heavy cruiser hulls, built to sweep about 60
+  mines a pass. They join its fleets and clear mines along the way, and
+  ships with enough sweep power go after marked minefields within 3
+  jumps. AI ships still ignore marked spaces when pathfinding unless a
+  script tells them otherwise.
+
+AI Raids and Warship Production
+-------------------------------
+- Lone AI warships can now raid weak colonies nearby, and ships passing
+  through stop to attack them.
+- Raids are now hit-and-run: a raid lasts 3 turns, then the colony is
+  left alone for 15 turns. A healthy raider stays to blockade a colony
+  with facilities and nothing armed to defend it, which stops its
+  income. Empires short on warships no longer raid.
+- Bases, weapon platforms, and deployed satellites no longer count as
+  warships, so an AI with almost no navy can't look well armed to
+  itself.
+- An AI at war now builds warships first, at its fastest open shipyard,
+  and keeps planned warships instead of swapping them for colony ships.
+
+Turn Resolution
+---------------
+- Fixed turn results sometimes differing between runs of the same turn.
+  Every turn now uses one seeded source of random numbers.
+
+[Nov 3 2026]
+
+Saving
+------
+- The game now auto-saves when you close the window normally, not just
+  on a crash. Look for an EXIT save in your saves folder.
+
+Turn Log
+--------
+- Fixed Goto, the category tabs, and the This Turn/All Turns filter
+  doing nothing in the Turn Log.
+- Fixed closed floating panels sometimes leaving an invisible window
+  behind that held focus until you pressed Escape.
+
+Ship Details
+------------
+- Destroyed ship components now have a dimmed icon with a cracked-glass
+  overlay, so they stand apart from merely damaged ones.
+
+Build Queue
+-----------
+- Hover over a queue row and press X to remove it. It asks for the same
+  confirmation as the row's X button when production is invested.
+
+Research Popup
+--------------
+- Fixed unlock names being cut off in the right-click tech popup. The
+  popup is wider, and longer names now wrap.
+
+AI Shipyards and Fleets
+-----------------------
+- Fixed a production deadlock that could leave an AI empire with a
+  single shipyard. Ships queued at colonies without a shipyard blocked
+  its queue forever and stopped it building facilities. These items are
+  now cancelled and refunded.
+- AI minimum fleet size now scales with its navy (40% of mobile ships,
+  at least 3, up to the race's limit). Most AI navies never reached the
+  old minimum of 8 to 15 ships, so they sat at depots instead of
+  attacking.
+
 [Sep 16 2026]
 
 Floating Panels
